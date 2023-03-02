@@ -563,7 +563,7 @@ uint16_t Socket::get_peerPort() {
     if (!_socketFd) return 0;
     return SocketUtil::getPeerPort(_socketFd->getFd());
 };
-std::string Socket::getIdentifier() {
+std::string Socket::getIdentifier() const {
     return "Socket" + std::to_string(reinterpret_cast<uint64_t>(this));
 };
 

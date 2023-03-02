@@ -119,7 +119,7 @@ public:
     virtual uint16_t get_localPort() = 0;
     virtual std::string get_peerIP() = 0;
     virtual uint16_t get_peerPort() = 0;
-    virtual std::string getIdentifier() { return ""; }
+    virtual std::string getIdentifier() const { return ""; }
 };
 
 // socket对象
@@ -207,7 +207,7 @@ public:
     uint16_t get_localPort() override;
     std::string get_peerIP() override;
     uint16_t get_peerPort() override;
-    std::string getIdentifier() override;
+    std::string getIdentifier() const override;
 
 private:
     SocketFD::Ptr cloneSocketFd(const Socket &sock);
