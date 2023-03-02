@@ -1,0 +1,5 @@
+
+add_executable(test_udpSock test_udpSock.cpp)
+
+target_link_libraries(test_udpSock myNetWork)
+target_link_libraries(test_udpSock ZLToolKit)

@@ -1,3 +1,3 @@
-- 运行目前的程序（cmake之后写）
-  - 编译安装[ZLToolKit](https://github.com/ZLMediaKit/ZLToolKit)
-  - clang++ test_udpSock.cpp Buffer.hpp Buffer.cpp Socket.hpp Socket.cpp uv_errno.hpp uv_errno.cpp SocketUtil.hpp SocketUtil.cpp -lZLToolKit -lpthread && ./a.out
+- 编译安装[ZLToolKit](https://github.com/ZLMediaKit/ZLToolKit)
+- mkdir build && cd build
+- 运行test里面的文件
