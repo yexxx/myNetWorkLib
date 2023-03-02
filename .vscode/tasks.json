@@ -2,10 +2,8 @@
     "tasks": [
         {
             "label": "build",
-            "command": "make",
-            "args": [
-                "-j16"
-            ],
+            "type": "shell",
+            "command": "cmake .. && make -j16",
             "options": {
                 "cwd": "${workspaceFolder}/build"
             }
