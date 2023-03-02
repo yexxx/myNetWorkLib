@@ -1,5 +1,8 @@
+aux_source_directory(. TEST_LISTS)
+foreach(TEST ${TEST_LISTS})
+    STRING(REGEX REPLACE "^\\./|\\.c[a-zA-Z0-9_]*$" "" TEST_EXE_NAME ${TEST})
+    add_executable(${TEST_EXE_NAME}  ${TEST})
 
-add_executable(test_udpSock test_udpSock.cpp)
+    target_link_libraries(${TEST_EXE_NAME}  myNetWork ZLToolKit pthread)
 
-target_link_libraries(test_udpSock myNetWork)
-target_link_libraries(test_udpSock ZLToolKit)
+endforeach(TEST ${TEST_LISTS})
