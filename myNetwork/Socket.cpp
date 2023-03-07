@@ -667,7 +667,8 @@ bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
         }
     }
     while (!sendBufSending.empty()) {
-        auto n = sendBufSending.front()->send(sock->getFd(), _sockFlags);
+        auto n = sendBufSending.front()
+                     ->send(sock->getFd(), _sockFlags);
         if (n > 0) {
             if (sendBufSending.front()->empty()) {
                 sendBufSending.pop_front();

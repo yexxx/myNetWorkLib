@@ -4,14 +4,15 @@
 #include <atomic>
 #include <memory>
 
-#include "Server.hpp"
 #include "Socket.hpp"
 
 namespace myNet {
 // session 用于标识符
 static std::atomic<uint64_t> SessionIndex;
 
-class Session : std::enable_shared_from_this<Session>, public SocketHelper {
+class Server;
+
+class Session : public std::enable_shared_from_this<Session>, public SocketHelper {
 public:
     using Ptr = std::shared_ptr<Session>;
 

@@ -35,9 +35,10 @@ bool SessionMap::add(const std::string& tag, const Session::Ptr& session) {
     return _mapSession.emplace(tag, session).second;
 }
 
-SessionHelper::SessionHelper(const std::weak_ptr<Server> server, Session::Ptr session)
+SessionHelper::SessionHelper(const std::weak_ptr<Server>& server, Session::Ptr session)
     : _server(server), _session(std::move(session)) {
     _id = _session->getIdentifier();
+    _sessionMap = SessionMap::Instance().shared_from_this();
     _sessionMap->add(_id, _session);
 }
 

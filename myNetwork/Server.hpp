@@ -16,9 +16,11 @@ public:
     using Ptr = std::shared_ptr<SessionMap>;
 
     static SessionMap &Instance() {
-        static SessionMap sessionMap;
-        return sessionMap;
+        static std::shared_ptr<SessionMap> s_instance(new SessionMap);
+        static SessionMap &s_instance_ref = *s_instance;
+        return s_instance_ref;
     }
+    ~SessionMap() = default;
 
     Session::Ptr get(const std::string &tag);
 
@@ -35,11 +37,13 @@ private:
     std::unordered_map<std::string, std::weak_ptr<Session>> _mapSession;
 };
 
+class Server;
+
 class SessionHelper {
 public:
     using Ptr = std::shared_ptr<SessionHelper>;
-
-    SessionHelper(const std::weak_ptr<Server> Server, Session::Ptr session);
+    SessionHelper(){};
+    SessionHelper(const std::weak_ptr<Server> &Server, Session::Ptr session);
     ~SessionHelper();
 
     const Session::Ptr getSession() const { return _session; };
@@ -48,7 +52,7 @@ private:
     std::string _id;
     Session::Ptr _session;
     std::weak_ptr<Server> _server;
-    SessionMap::Ptr _sessionMap{SessionMap::Instance().shared_from_this()};
+    SessionMap::Ptr _sessionMap;
 };
 
 class Server : public std::enable_shared_from_this<Server> {
