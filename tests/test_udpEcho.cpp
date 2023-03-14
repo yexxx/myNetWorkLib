@@ -82,7 +82,7 @@ int main() {
     //     DebugL << "recv data form " << getIP(addr) << ":" << getPort(addr) << " :" << buf->data();
     // });
 
-    // 使用netchat -u localhost 9001 测试
+    // 使用netcat -u localhost 9001 测试
     getchar();
 
     // 自定义udpsock 测试

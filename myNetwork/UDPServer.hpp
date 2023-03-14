@@ -15,64 +15,14 @@ public:
 
     // 开始监听服务器
     template <typename SessionType>
-    void start(uint16_t port, const std::string& host = "::") {
-        _sessionBuilder = [](const UDPServer::Ptr& server, const Socket::Ptr sock) {
-            auto session = std::make_shared<SessionType>(sock);
-            auto tmpOnCreateSocketCB = server->_onCreateSocketCB;
-            session->setOnCreateSocket([tmpOnCreateSocketCB](const toolkit::EventPoller::Ptr& poller) {
-                return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0);
-            });
-            std::weak_ptr<Server> tserver = server;
-            return std::make_shared<SessionHelper>(server, session);
-        };
-
-        // 主Server创建, 复制的Server 共享
-        _sessionMtx = std::make_shared<std::recursive_mutex>();
-        _sessionMap = std::make_shared<std::unordered_map<std::string, SessionHelper::Ptr>>();
-
-        if (!_socket->bindUdpSocket(port, host)) {
-            throw std::runtime_error("BindUdpSocket faild: " + host + ":" + std::to_string(port));
-        }
-
-        // 父类的enable_shared_from_this, 子类用要强制转换
-        std::weak_ptr<UDPServer> weakThis = std::dynamic_pointer_cast<UDPServer>(shared_from_this());
-        _timer = std::make_shared<toolkit::Timer>(
-            2.0f,
-            [weakThis]() -> bool {
-                auto strong_self = weakThis.lock();
-                if (!strong_self) {
-                    return false;
-                }
-                strong_self->onManageSession();
-                return true;
-            },
-            _poller);
-
-        //clone server至不同线程，让udp server支持多线程
-        toolkit::EventPollerPool::Instance().for_each(
-            [&](const toolkit::TaskExecutor::Ptr& executor) {
-                auto poller = std::dynamic_pointer_cast<toolkit::EventPoller>(executor);
-                if (poller == _poller || !poller) {
-                    return;
-                }
-                auto& serverRef = _clonedServer[poller.get()];
-                if (!serverRef) {
-                    serverRef = std::make_shared<UDPServer>(poller);
-                }
-                if (serverRef) {
-                    serverRef->cloneFrom(*this);
-                }
-            });
-
-        InfoL << "UDP server bind to [" << host << "]: " << port;
-    };
+    void start(uint16_t port, const std::string& host = "::");
 
     uint16_t getPort() {
         if (_socket) return _socket->get_localPort();
         return 0;
     };
 
-    Socket::Ptr getSocket() { return _socket; }
+    // Socket::Ptr getSocket() { return _socket; } // For Debug
 
     void setOnCreateSocket(onCreateSocketCB cb);
 
@@ -104,12 +54,65 @@ private:
 
     // recursive_mutex 减小死锁可能性, 但效率不如mutex; 可能从其它Server复制,所以用shared_ptr
     std::shared_ptr<std::recursive_mutex> _sessionMtx;
-    // 非SessionMap 类
+    // key: socket hash id, value: sessionHelper
     std::shared_ptr<std::unordered_map<std::string, SessionHelper::Ptr>> _sessionMap;
     // 主server 持有cloned server 的引用
     std::unordered_map<toolkit::EventPoller*, Ptr> _clonedServer;
     // Session 构建器, 用于构建不同类型的Session(针对不同应用场景实现不同的Session子类，利用多态实现不同功能)
     std::function<SessionHelper::Ptr(const UDPServer::Ptr&, const Socket::Ptr&)> _sessionBuilder;
+};
+
+template <typename SessionType>
+inline void UDPServer::start(uint16_t port, const std::string& host) {
+    _sessionBuilder = [](const UDPServer::Ptr& server, const Socket::Ptr sock) {
+        auto session = std::make_shared<SessionType>(sock);
+        auto tmpOnCreateSocketCB = server->_onCreateSocketCB;
+        session->setOnCreateSocket([tmpOnCreateSocketCB](const toolkit::EventPoller::Ptr& poller) {
+            return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0);
+        });
+        std::weak_ptr<Server> tserver = server;
+        return std::make_shared<SessionHelper>(server, session);
+    };
+
+    // 主Server创建, 复制的Server 共享
+    _sessionMtx = std::make_shared<std::recursive_mutex>();
+    _sessionMap = std::make_shared<std::unordered_map<std::string, SessionHelper::Ptr>>();
+
+    if (!_socket->bindUdpSocket(port, host)) {
+        throw std::runtime_error("BindUdpSocket faild: " + host + ":" + std::to_string(port));
+    }
+
+    // 父类的enable_shared_from_this, 子类用要强制转换
+    std::weak_ptr<UDPServer> weakThis = std::dynamic_pointer_cast<UDPServer>(shared_from_this());
+    _timer = std::make_shared<toolkit::Timer>(
+        2.0f,
+        [weakThis]() -> bool {
+            auto strong_self = weakThis.lock();
+            if (!strong_self) {
+                return false;
+            }
+            strong_self->onManageSession();
+            return true;
+        },
+        _poller);
+
+    //clone server至不同线程，让udp server支持多线程
+    toolkit::EventPollerPool::Instance().for_each(
+        [&](const toolkit::TaskExecutor::Ptr& executor) {
+            auto poller = std::dynamic_pointer_cast<toolkit::EventPoller>(executor);
+            if (poller == _poller || !poller) {
+                return;
+            }
+            auto& serverRef = _clonedServer[poller.get()];
+            if (!serverRef) {
+                serverRef = std::make_shared<UDPServer>(poller);
+            }
+            if (serverRef) {
+                serverRef->cloneFrom(*this);
+            }
+        });
+
+    InfoL << "UDP server bind to [" << host << "]: " << port;
 };
 
 }  // namespace myNet

@@ -1,3 +1,6 @@
+#ifndef myUtil_hpp
+#define myUtil_hpp
+
 #include <mutex>
 
 namespace myNet {
@@ -33,4 +36,29 @@ private:
     std::recursive_mutex _Mtx;
 };
 
+class onceToken : public noncopyable {
+public:
+    onceToken(std::function<void(void)> onConstructed, std::function<void(void)> onDestructed = nullptr) {
+        onConstructed();
+        _onDestructed = std::move(onDestructed);
+    }
+
+    // 只需要析构时
+    onceToken(std::nullptr_t, std::function<void(void)> onDestructed = nullptr) {
+        _onDestructed = std::move(onDestructed);
+    }
+
+    ~onceToken() {
+        if (_onDestructed) {
+            _onDestructed();
+        }
+    };
+
+private:
+    onceToken() = delete;
+    std::function<void(void)> _onDestructed;
+};
+
 }  // namespace myNet
+
+#endif
