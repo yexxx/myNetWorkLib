@@ -100,30 +100,31 @@ Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
     SessionHelper* helperPtr = sessionHelper.get();
     sock->setOnErr(
         [weakThis, weakSession, helperPtr](const SocketException& err) {
-            WarnL << "Err.";
             // 出该作用域时从sessionMap 中删除session
-            onceToken token(nullptr,
-                            [weakThis, helperPtr]() {
-                                auto strongThis = weakThis.lock();
-                                if (!strongThis) {
-                                    return;
-                                }
-                                assert(strongThis->_poller->isCurrentThread());
-                                // 管理时需在map 中遍历，不能直接删除
-                                if (strongThis->_isOnManager) {
+            std::unique_ptr<std::nullptr_t, std::function<void(void*)>>
+                deleter(
+                    nullptr,
+                    [weakThis, helperPtr](void*) {
+                        auto strongThis = weakThis.lock();
+                        if (!strongThis) {
+                            return;
+                        }
+                        assert(strongThis->_poller->isCurrentThread());
+                        // 管理时需在map 中遍历，不能直接删除
+                        if (strongThis->_isOnManager) {
+                            strongThis->_sessionMap.erase(helperPtr);
+                        } else {
+                            strongThis->_poller->async(
+                                [weakThis, helperPtr]() {
+                                    auto strongThis = weakThis.lock();
+                                    if (!strongThis) {
+                                        return;
+                                    }
                                     strongThis->_sessionMap.erase(helperPtr);
-                                } else {
-                                    strongThis->_poller->async(
-                                        [weakThis, helperPtr]() {
-                                            auto strongThis = weakThis.lock();
-                                            if (!strongThis) {
-                                                return;
-                                            }
-                                            strongThis->_sessionMap.erase(helperPtr);
-                                        },
-                                        false);
-                                }
-                            });
+                                },
+                                false);
+                        }
+                    });
 
             auto strongSession = weakSession.lock();
             if (strongSession) {
@@ -137,8 +138,8 @@ Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
 void TCPServer::onManagerSession() {
     assert(_poller->isCurrentThread());
 
-    onceToken token([this]() { _isOnManager = true; },
-                    [this]() { _isOnManager = false; });
+    _isOnManager = true;
+    std::unique_ptr<std::nullptr_t, std::function<void(void*)>> deleter(nullptr, [this](void*) { _isOnManager = false; });
 
     for (auto& [_, session] : _sessionMap) {
         try {
