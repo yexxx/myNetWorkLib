@@ -22,7 +22,7 @@ int SocketUtil::connect(const char* host, uint16_t port, bool async, const char*
     }
 
     setReuseable(sockfd);
-    setNoBlocked(sockfd);
+    setNoBlocked(sockfd, async);
     setNoDelay(sockfd);
     setSendBuf(sockfd);
     setRecvBuf(sockfd);
@@ -35,6 +35,10 @@ int SocketUtil::connect(const char* host, uint16_t port, bool async, const char*
     }
 
     if (0 == ::connect(sockfd, (sockaddr*)&addr, getSockLen((sockaddr*)&addr))) {
+        return sockfd;
+    }
+
+    if (async && uv_translate_posix_error(errno) == UV_EAGAIN) {
         return sockfd;
     }
 
@@ -517,7 +521,10 @@ int SocketUtil::bindSock4(int sockfd, const char* NICIp, uint16_t port) {
 
     if (1 != inet_pton(AF_INET, NICIp, &(addr.sin_addr))) {
         // 原代码这儿是 如果ip是"::" 就不报错，感觉没必要
-        WarnL << "inet_pton to ipv4 address failed: " << NICIp;
+        // 有必要!默认ip 都是"::"
+        if (strcmp(NICIp, "::")) {
+            WarnL << "inet_pton to ipv4 address failed: " << NICIp;
+        }
         addr.sin_addr.s_addr = INADDR_ANY;
     }
     if (-1 == ::bind(sockfd, (sockaddr*)&addr, sizeof(addr))) {

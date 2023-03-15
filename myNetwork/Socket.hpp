@@ -46,7 +46,7 @@ public:
 
     Errcode getErrcode() const { return _code; }
 
-    operator bool() const { return _code == Errcode::Err_sucess; }
+    operator bool() const { return _code != Errcode::Err_sucess; }
 
 private:
     Errcode _code;

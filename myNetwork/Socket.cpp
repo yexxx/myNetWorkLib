@@ -115,7 +115,9 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
             // connect callback
             auto connectCB = [errCB, weakThis](const SocketException &err) {
                 auto sharedThis = weakThis.lock();
-                if (!sharedThis) return;
+                if (!sharedThis) {
+                    return;
+                }
                 sharedThis->_asyncConnectCB = nullptr;
                 sharedThis->_conTime = nullptr;
                 if (err) {
@@ -139,17 +141,20 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
                         connectCB(SocketException(Errcode::Err_dns, "Sockfd = -1."));
                         return;
                     }
-
                     std::weak_ptr<SocketFD> weakSocketFd = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
 
-                    // 监听socket是否可写
+                    // 监听socket是否可写，若可写表明已经连接成功
                     if (-1 ==
-                        sharedThis->_poller->addEvent(sockfd, toolkit::EventPoller::Event_Write,
-                                                      [weakThis, weakSocketFd, connectCB](int event) {
-                                                          auto sharedThis = weakThis.lock();
-                                                          auto sharedSockedFd = weakSocketFd.lock();
-                                                          if (sharedThis && sharedSockedFd) sharedThis->onConnected(sharedSockedFd, connectCB);
-                                                      })) {
+                        sharedThis->_poller->addEvent(
+                            sockfd, toolkit::EventPoller::Event_Write,
+                            [weakThis, weakSocketFd, connectCB](int event) {
+                                WarnL << "go to event";
+                                auto sharedThis = weakThis.lock();
+                                auto sharedSockedFd = weakSocketFd.lock();
+                                if (sharedThis && sharedSockedFd) {
+                                    sharedThis->onConnected(sharedSockedFd, connectCB);
+                                }
+                            })) {
                         connectCB(SocketException(Errcode::Err_other, "Add event to poller failed when start connect."));
                         return;
                     }
@@ -161,6 +166,7 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
 
             // 如果url是ip就在该线程执行，否则异步解析dns
             if (toolkit::isIP(url.data())) {
+                // 都是异步执行的，所以这个地方第三个参数都是true
                 (*asyncConnectCB)(SocketUtil::connect(url.data(), port, true, localIP.data(), localPort));
             } else {
                 std::weak_ptr<std::function<void(int)>> weakTask = asyncConnectCB;
@@ -183,7 +189,8 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
 
             // 定时器
             sharedThis->_conTime = std::make_shared<toolkit::Timer>(
-                timeoutSec, [connectCB]() {
+                timeoutSec,
+                [connectCB]() {
                     connectCB(SocketException(Errcode::Err_timeout, "Connect timeout."));
                     return false;
                 },
@@ -379,7 +386,6 @@ bool Socket::listen(uint16_t port, const std::string &localIP, int backLog) {
 bool Socket::bindUdpSocket(uint16_t port, const std::string &localIP, bool enableReuse) {
     closeSocket();
 
-    // int fd = toolkit::SockUtil::bindUdpSock(port, localIP.data(), enableReuse);
     int fd = SocketUtil::bindUdpSocket(port, localIP.data(), enableReuse);
     if (-1 == fd) return false;
     auto sock = makeSocketFD(fd, SocketType::Socket_UDP);
