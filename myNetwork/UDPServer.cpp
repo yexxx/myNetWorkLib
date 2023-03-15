@@ -152,6 +152,7 @@ const Session::Ptr& UDPServer::getSession(const std::string& peerId, const Buffe
         std::lock_guard<std::recursive_mutex> lock(*_sessionMtx);
         auto iter = _sessionMap->find(peerId);
         if (iter != _sessionMap->end()) {
+            // warning: returning reference to local temporary object
             return iter->second->getSession();
         }
     }
@@ -238,6 +239,7 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
 
     // 若socket 在本线程，直接创建并返回Session
     if (socket->getPoller()->isCurrentThread()) {
+        // warning: returning reference to local temporary object
         return sessionCreater();
     }
 
