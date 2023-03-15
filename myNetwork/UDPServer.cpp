@@ -210,13 +210,25 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
         // 这个地方析构顺序可能有问题
         socket->setOnErr(
             [weakThis, weakSession, id](const SocketException& err) {
-                if (auto sharedSession = weakSession.lock()) {
-                    sharedSession->onErr(err);
-                    if (auto sharedThis = weakThis.lock()) {
-                        std::lock_guard<std::recursive_mutex> lck(*(sharedThis->_sessionMtx));
-                        sharedThis->_sessionMap->erase(id);
-                    }
+                std::unique_ptr<std::nullptr_t, std::function<void(void*)>>
+                    deleter(
+                        nullptr,
+                        [weakThis, id](void*) {
+                            auto sharedThis = weakThis.lock();
+                            if (!sharedThis) {
+                                return;
+                            }
+
+                            std::lock_guard<std::recursive_mutex> lck(*sharedThis->_sessionMtx);
+                            sharedThis->_sessionMap->erase(id);
+                        });
+                auto sharedSession = weakSession.lock();
+
+                if (!sharedSession) {
+                    return;
                 }
+
+                sharedSession->onErr(err);
             });
 
         auto iter = _sessionMap->emplace(id, std::move(helper));
