@@ -14,13 +14,13 @@ public:
     ~TestClient() {}
 
 protected:
-    virtual void onRecv(const Buffer::Ptr &pBuf) override {
+    virtual void onRecv(const Buffer::Ptr &buf) override {
         //接收数据事件
-        DebugL << pBuf->data() << " from port:" << get_peerPort();
+        DebugL << buf->data() << " from port:" << get_peerPort();
     }
     virtual void onFlush() override {
         //发送阻塞后，缓存清空事件
-        DebugL << "onFlush";
+        // DebugL << "onFlush";
     }
     virtual void onManager() override {
         //定时发送数据到服务器
@@ -39,12 +39,12 @@ int main() {
     toolkit::Logger::Instance().setWriter(std::make_shared<toolkit::AsyncLogWriter>());
 
     TestClient::Ptr client(new TestClient());
-    client->connect("127.0.0.1", 9001);  //连接服务器
+    client->connect("localhost", 9001);  //连接服务器
 
-    while (1) {
-        getchar();
-        WarnL << client->get_localIP() << " " << client->get_localPort();
-        WarnL << client->get_peerIP() << " " << client->get_peerPort();
+    while (getchar()) {
+        WarnL << client->getSocket()->getFd() << " : "
+              << client->get_localIP() << " " << client->get_localPort() << " "
+              << client->get_peerIP() << " " << client->get_peerPort();
     }
 
     // 退出程序事件处理

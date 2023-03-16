@@ -107,7 +107,9 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
     _poller->async(
         [=]() /* 值传递this指针,lambda函数内可以修改类的属性值 */ {
             auto sharedThis = weakThis.lock();
-            if (sharedThis == nullptr) return;
+            if (!sharedThis) {
+                return;
+            }
 
             // 重置当前socket
             closeSocket();
@@ -133,22 +135,26 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
                     auto sharedThis = weakThis.lock();
 
                     // 错误处理
-                    if (sharedThis == nullptr) {
-                        if (sockfd != -1) close(sockfd);
+                    if (!sharedThis) {
+                        if (sockfd != -1) {
+                            close(sockfd);
+                        }
                         return;
                     }
                     if (sockfd == -1) {
                         connectCB(SocketException(Errcode::Err_dns, "Sockfd = -1."));
                         return;
                     }
-                    std::weak_ptr<SocketFD> weakSocketFd = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
+
+                    // 这儿的sockFdClass 和下面的必须一致
+                    auto sockFdClass = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
+                    std::weak_ptr<SocketFD> weakSocketFd = sockFdClass;
 
                     // 监听socket是否可写，若可写表明已经连接成功
                     if (-1 ==
                         sharedThis->_poller->addEvent(
                             sockfd, toolkit::EventPoller::Event_Write,
                             [weakThis, weakSocketFd, connectCB](int event) {
-                                WarnL << "go to event";
                                 auto sharedThis = weakThis.lock();
                                 auto sharedSockedFd = weakSocketFd.lock();
                                 if (sharedThis && sharedSockedFd) {
@@ -161,7 +167,7 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
 
                     // set fd
                     std::lock_guard<MutexWrapper> lck(sharedThis->_mtxSocketFd);
-                    sharedThis->_socketFd = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
+                    sharedThis->_socketFd = std::move(sockFdClass);
                 });
 
             // 如果url是ip就在该线程执行，否则异步解析dns
@@ -405,7 +411,9 @@ ssize_t Socket::send(const std::string buf, sockaddr *addr, socklen_t addrLen, b
     return send(std::make_shared<BufferString>(buf), addr, addrLen, tryFlush);
 };
 ssize_t Socket::send(const Buffer::Ptr buf, sockaddr *addr, socklen_t addrLen, bool tryFlush) {
-    if (!buf || buf->size() == 0) return 0;
+    if (!buf || buf->size() == 0) {
+        return 0;
+    }
     auto size = buf->size();
 
     {
@@ -416,14 +424,19 @@ ssize_t Socket::send(const Buffer::Ptr buf, sockaddr *addr, socklen_t addrLen, b
             _sendBufWaiting.emplace_back(buf);
         }
     }
-    if (tryFlush && flushAll()) return -1;
+
+    if (tryFlush && flushAll()) {
+        return -1;
+    }
 
     return size;
 };
 
 int Socket::flushAll() {
     std::lock_guard<MutexWrapper> lck(_mtxSocketFd);
-    if (!_socketFd) return -1;
+    if (!_socketFd) {
+        return -1;
+    }
     if (_sendable) {
         return flushData(_socketFd, false) ? 0 : -1;
     } else {
@@ -800,8 +813,10 @@ toolkit::Task::Ptr SocketHelper::async_first(toolkit::TaskIn task, bool maySync)
 };
 
 ssize_t SocketHelper::send(Buffer::Ptr buf) {
-    if (!_sock) return -1;
-    return _sock->send(buf, nullptr, 0, _tryFlush);
+    if (!_sock) {
+        return -1;
+    }
+    return _sock->send(std::move(buf), nullptr, 0, _tryFlush);
 };
 void SocketHelper::shutdown(const SocketException &socketException) {
     if (_sock) {

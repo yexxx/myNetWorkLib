@@ -1,14 +1,14 @@
 #include "TCPServer.hpp"
 
 namespace myNet {
-TCPServer::TCPServer(const toolkit::EventPoller::Ptr& poller) {
+TCPServer::TCPServer(const toolkit::EventPoller::Ptr& poller) : Server(poller) {
     setOnCreateSocket(nullptr);
     _socket = _onCreateSocket(poller);
     // accept 之前，创建socket
     _socket->setOnCreateSocket(
         [this](const toolkit::EventPoller::Ptr& poller) {
             // 这个地方会报错，先注释掉
-            // assert(_poller->isCurrentThread());
+            assert(_poller->isCurrentThread());
             return _onCreateSocket(toolkit::EventPollerPool::Instance().getPoller(false));
         });
     _socket->setOnAccept(
@@ -72,15 +72,14 @@ void TCPServer::cloneFrom(const TCPServer& that) {
 Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
     // 这儿之前会出问题，不知道为什么，暂时未复现
     // 已复现，暂时注释掉以解决
-    // assert(_poller->isCurrentThread());
+    assert(_poller->isCurrentThread());
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
 
     auto sessionHelper = _sessionBuilder(std::dynamic_pointer_cast<TCPServer>(shared_from_this()), sock);
     auto session = sessionHelper->getSession();
     session->attachServer(*this);
 
-    assert(true ==
-           _sessionMap.emplace(sessionHelper.get(), sessionHelper).second);
+    assert(true == _sessionMap.emplace(sessionHelper.get(), sessionHelper).second);
 
     std::weak_ptr<Session> weakSession = session;
 

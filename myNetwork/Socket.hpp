@@ -312,7 +312,7 @@ protected:
     void setSock(const Socket::Ptr &sock);
 
 private:
-    bool _tryFlush{false};
+    bool _tryFlush{true};
     uint16_t _localPort{0};
     uint16_t _peerPort{0};
     std::string _localIP{""};
