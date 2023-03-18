@@ -38,6 +38,7 @@ bool SessionMap::add(const std::string& tag, const Session::Ptr& session) {
 SessionHelper::SessionHelper(const std::weak_ptr<Server>& server, Session::Ptr session)
     : _server(server), _session(std::move(session)) {
     _id = _session->getIdentifier();
+    // 只有_sessionMap 被shared_ptr 管理时才能shared_from_this()
     _sessionMap = SessionMap::Instance().shared_from_this();
     _sessionMap->add(_id, _session);
 }

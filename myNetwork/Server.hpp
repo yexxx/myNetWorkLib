@@ -16,10 +16,14 @@ public:
     using Ptr = std::shared_ptr<SessionMap>;
 
     static SessionMap &Instance() {
-        static std::shared_ptr<SessionMap> s_instance(new SessionMap);
+        // 静态变量在程序结束时才会被析构
+        // 这个地方使用shared_ptr 是因为之后(Server.cpp:42)要获取
+        static auto s_instance = std::make_shared<SessionMap>();
         static SessionMap &s_instance_ref = *s_instance;
         return s_instance_ref;
     }
+
+    SessionMap() = default;
     ~SessionMap() = default;
 
     Session::Ptr get(const std::string &tag);
@@ -27,8 +31,6 @@ public:
     void for_each_session(const std::function<void(const std::string &id, const Session::Ptr &session)> &cb);
 
 private:
-    SessionMap() = default;
-
     bool del(const std::string &tag);
 
     bool add(const std::string &tag, const Session::Ptr &session);
