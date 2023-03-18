@@ -102,30 +102,29 @@ Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
     sock->setOnErr(
         [weakThis, weakSession, helperPtr](const SocketException& err) {
             // 出该作用域时从sessionMap 中删除session
-            std::unique_ptr<std::nullptr_t, std::function<void(void*)>>
-                deleter(
-                    nullptr,
-                    [weakThis, helperPtr](void*) {
-                        auto strongThis = weakThis.lock();
-                        if (!strongThis) {
-                            return;
-                        }
-                        assert(strongThis->_poller->isCurrentThread());
-                        // 管理时需在map 中遍历，不能直接删除
-                        if (strongThis->_isOnManager) {
-                            strongThis->_sessionMap.erase(helperPtr);
-                        } else {
-                            strongThis->_poller->async(
-                                [weakThis, helperPtr]() {
-                                    auto strongThis = weakThis.lock();
-                                    if (!strongThis) {
-                                        return;
-                                    }
-                                    strongThis->_sessionMap.erase(helperPtr);
-                                },
-                                false);
-                        }
-                    });
+            std::shared_ptr<void> deleter(
+                nullptr,
+                [weakThis, helperPtr](void*) {
+                    auto strongThis = weakThis.lock();
+                    if (!strongThis) {
+                        return;
+                    }
+                    assert(strongThis->_poller->isCurrentThread());
+                    // 管理时需在map 中遍历，不能直接删除
+                    if (strongThis->_isOnManager) {
+                        strongThis->_sessionMap.erase(helperPtr);
+                    } else {
+                        strongThis->_poller->async(
+                            [weakThis, helperPtr]() {
+                                auto strongThis = weakThis.lock();
+                                if (!strongThis) {
+                                    return;
+                                }
+                                strongThis->_sessionMap.erase(helperPtr);
+                            },
+                            false);
+                    }
+                });
 
             auto strongSession = weakSession.lock();
             if (strongSession) {
@@ -140,7 +139,7 @@ void TCPServer::onManagerSession() {
     assert(_poller->isCurrentThread());
 
     _isOnManager = true;
-    std::unique_ptr<std::nullptr_t, std::function<void(void*)>> deleter(nullptr, [this](void*) { _isOnManager = false; });
+    std::shared_ptr<void> deleter(nullptr, [this](void*) { _isOnManager = false; });
 
     for (auto& [_, session] : _sessionMap) {
         try {
