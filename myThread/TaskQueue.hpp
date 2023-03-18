@@ -19,7 +19,7 @@ public:
             LOCK_GUDAD lck(_mtx);
             _queue.emplace_back(std::forward<TaskFunc>(taskFunc));
         }
-        _sem.notify();
+        _sem.post();
     }
 
     template <typename TaskFunc>
@@ -28,11 +28,11 @@ public:
             LOCK_GUDAD lck(_mtx);
             _queue.emplace_front(std::forward<TaskFunc>(taskFunc));
         }
-        _sem.notify();
+        _sem.post();
     }
 
     // 清空任务队列
-    void pushExit(size_t n) { _sem.notify(n); }
+    void pushExit(size_t n) { _sem.post(n); }
 
     // 这个地方wait 位置可能有问题，原代码写在开头
     bool getTask(TaskType& task) {
