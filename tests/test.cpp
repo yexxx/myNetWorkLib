@@ -1,6 +1,14 @@
+#include <unistd.h>
+
+#include <csignal>
+#include <functional>
 #include <iostream>
 #include <memory>
+
+#include "../myThread/Semaphore.hpp"
+
 using namespace std;
+using namespace myNet;
 
 // 禁止拷贝基类
 class noncopyable {
@@ -26,21 +34,22 @@ private:
     int _num{10};
 };
 
+Semaphore sem;
 int main() {
-    // testClass *t{new testClass()};
-    // auto tt{move(t)};
+    {
+        shared_ptr<void> sp(nullptr, [&](void *) {
+            cout << "~~~~~~~~~~~~~~~~~\n";
+            sem.post();
+            return nullptr;
+        });
+    }
 
-    // cout << t->get() << endl;
-    // cout << tt->get() << endl;
+    // signal(SIGINT, [](int) {
+    //     sem.post();
+    // });
 
-    shared_ptr<testClass> t{make_unique<testClass>()};
-    auto t1(t);
-
-    shared_ptr<const testClass> tt(move(t1));
-
-    cout << t.use_count() << endl;  // seg fault
-    // cout << tt.use_count() << endl;
-    cout << t->get() << endl;
+    sem.wait();
+    printf("dasd\n");
 
     return 0;
 }

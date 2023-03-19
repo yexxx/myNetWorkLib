@@ -8,9 +8,23 @@
 - mkdir build && cd build
 - 运行test里面的文件
 
+## 待完成内容
+
+将会完成
+
+  1. 线程库
+     - TaskExcuter.cpp:134
+     - WorkThreadPool.hpp:31, WorkThreadPool.hpp:36
+  2. 轮询器库
+
+可能过段时间再完成
+
+   1. TaskExcutor.hpp:13 ：时间管理库
+   2. 日志库（ZLToolKit 中的WarnL, DebugL 等）
+
 ## 待解决错误
 
-暂无
+1. Buffer无法处理中文字符
 
 ## 已解决错误
 
@@ -18,3 +32,6 @@
    这个错误是因为之前Socket.cpp:151, Socket.cpp:170 都使用了一次makeSocketFD 导致前后使用的不是同一个socketFD导致的
 2. TCPServer:10, TCPServer:75 poller 不在本线程的问题
    在TCPServer 初始化时未设置 _poller导致
+3. UDPServer.cpp:216
+   - 利用RAII特性使用`std::unique_ptr<std::nullptr_t, std::function<void(void*)>> deleter()`的自定义析构器时必须要new 一个变量，不然无法正确触发析构
+   - 使用`shared_ptr<void>` 时可使用nullptr，不存在上述问题

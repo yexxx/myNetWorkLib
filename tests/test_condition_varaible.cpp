@@ -21,7 +21,7 @@ void do_print_id(int id) {
 void go() {
     ready = true;  // 设置全局标志位为 true.
     // cv.notifyOne();
-    cv.notify(10);  // 唤醒所有线程.
+    cv.post(10);  // 唤醒所有线程.
 }
 
 int main() {
