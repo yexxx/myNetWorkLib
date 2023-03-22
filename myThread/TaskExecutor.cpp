@@ -2,9 +2,10 @@
 
 #include <thread>
 
-#include "Poller/EventPoller.h"
+#include "../myPoller/EventPoller.hpp"
 #include "Semaphore.hpp"
 #include "Util/TimeTicker.h"
+#include "Util/util.h"
 
 namespace myNet {
 
@@ -67,7 +68,7 @@ int ThreadLoadCounter::getLoad() {
     }
 
     if (totalTime != 0) {
-        return totalRunTime * 100 / totalSleepTime;
+        return totalRunTime * 100 / totalTime;
     }
     return 0;
 }
@@ -131,8 +132,18 @@ size_t TaskExecutorGetter::addPoller(const std::string& name, size_t size, int p
 
     for (auto i = 0; i < size; ++i) {
         auto fullName = name + " " + std::to_string(i);
-        // 创建事件轮询器并加入_threads, 等事件轮询器完成后再补全
-        assert(0);
+        // 上面的构造是错的，原因是make_shared 操作不能访问隐私方法
+        // auto poller = std::make_shared<EventPoller>(fullName, (ThreadPool::Priority)priority);
+        std::shared_ptr<EventPoller> poller(new EventPoller(fullName, (ThreadPool::Priority)priority));
+        poller->runLoop(false, registerThread);
+        poller->async([fullName, enableCpuAffinity, i]() {
+            pthread_setname_np(pthread_self(), fullName.data());
+            if (enableCpuAffinity) {
+                toolkit::setThreadAffinity(i % std::thread::hardware_concurrency());
+            }
+        });
+
+        _threads.emplace_back(std::move(poller));
     }
 
     return size;

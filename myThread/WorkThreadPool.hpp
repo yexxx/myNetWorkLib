@@ -24,7 +24,7 @@ public:
 
     static void setPoolSize(size_t size = 0) { poolSize = size; }
 
-    static void setEnableCpuAffinity(bool enable) { enableCpuAffinity = 0; };
+    static void setEnableCpuAffinity(bool enable) { enableCpuAffinity = enable; };
 
     toolkit::EventPoller::Ptr getPoller() {
         // 类型转换会出错

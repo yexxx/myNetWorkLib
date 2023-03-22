@@ -7,7 +7,6 @@
 #include "TaskQueue.hpp"
 #include "ThreadGroup.hpp"
 #include "Util/logger.h"
-#include "Util/util.h"
 
 namespace myNet {
 
@@ -91,7 +90,7 @@ private:
         Task::Ptr task;
         while (true) {
             startSleep();
-            // 由于_taskQueue的sem 在wait，所以若非pushExit的话不会在这停止
+            // 由于_taskQueue的sem 在wait，所以若非pushExit 的话不会在这停止
             if (!_taskQueue.getTask(task)) {
                 break;
             }

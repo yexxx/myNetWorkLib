@@ -141,6 +141,17 @@ public:
     // 获取最闲的线程
     TaskExecutor::Ptr getExecutor();
 
+    // 获取线程负载
+    std::vector<int> getExecutorLoad() {
+        std::vector<int> vec(_threads.size());
+        int i = 0;
+        for (auto& executor : _threads) {
+            vec[i++] = executor->getLoad();
+        }
+        return vec;
+    }
+
+    // 获取所有线程任务执行延时，通过此函数也可以大概知道线程负载情况
     void getExecutorDelay(const std::function<void(const std::vector<int>&)>& callback);
 
     size_t getExecutorSize() const { return _threads.size(); };
