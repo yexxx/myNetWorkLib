@@ -3,8 +3,10 @@
 #include <type_traits>
 
 #include "SocketUtil.hpp"
-#include "Thread/WorkThreadPool.h"
-#include "Thread/semaphore.h"
+// #include "Thread/WorkThreadPool.h"
+// #include "Thread/semaphore.h"
+#include "../myThread/Semaphore.hpp"
+#include "../myThread/WorkThreadPool.hpp"
 #include "Util/logger.h"
 #include "uv_errno.hpp"
 
@@ -28,9 +30,9 @@ static SocketException getSocketErr(const SocketFD::Ptr &sock) {
     return toSocketException(error);
 }
 
-Socket::Socket(const toolkit::EventPoller::Ptr poller, bool enableMutex)
+Socket::Socket(const EventPoller::Ptr poller, bool enableMutex)
     : _mtxEvent(enableMutex), _mtxSocketFd(enableMutex), _mtxSendBufSending(enableMutex), _mtxSendBufWaiting(enableMutex), _poller(poller) {
-    if (_poller == nullptr) _poller = toolkit::EventPollerPool::Instance().getPoller();
+    if (_poller == nullptr) _poller = EventPollerPool::Instance().getPoller();
 
     setOnRead(nullptr);
     setOnErr(nullptr);
@@ -45,7 +47,7 @@ Socket::~Socket() {
     _sendBufSending.clear();  // buffer析构时操作时触发回调，手动触发避免析构顺序问题
 }
 
-Socket::Ptr Socket::createSocket(const toolkit::EventPoller::Ptr &poller, bool enable_mutex) {
+Socket::Ptr Socket::createSocket(const EventPoller::Ptr &poller, bool enable_mutex) {
     return std::make_shared<Socket>(poller, enable_mutex);
 }
 
@@ -91,7 +93,7 @@ void Socket::setOnCreateSocket(onCreateSocketCB &&createSocketCB) {
     if (createSocketCB != nullptr)
         _onCreateSocketCB = createSocketCB;
     else
-        _onCreateSocketCB = [](const toolkit::EventPoller::Ptr &poller) {
+        _onCreateSocketCB = [](const EventPoller::Ptr &poller) {
             return nullptr;
         };
 };
@@ -153,7 +155,7 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
                     // 监听socket是否可写，若可写表明已经连接成功
                     if (-1 ==
                         sharedThis->_poller->addEvent(
-                            sockfd, toolkit::EventPoller::Event_Write,
+                            sockfd, EventPoller::Event_Write,
                             [weakThis, weakSocketFd, connectCB](int event) {
                                 auto sharedThis = weakThis.lock();
                                 auto sharedSockedFd = weakSocketFd.lock();
@@ -176,7 +178,7 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
                 (*asyncConnectCB)(SocketUtil::connect(url.data(), port, true, localIP.data(), localPort));
             } else {
                 std::weak_ptr<std::function<void(int)>> weakTask = asyncConnectCB;
-                toolkit::WorkThreadPool::Instance().getExecutor()->async(
+                WorkThreadPool::Instance().getExecutor()->async(
                     [url, port, localIP, localPort, weakTask, poller = _poller]() {
                         int tsocketFd = SocketUtil::connect(url.data(), port, true, localIP.data(), localPort);
                         poller->async(
@@ -194,13 +196,13 @@ void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errC
             }
 
             // 定时器
-            sharedThis->_conTime = std::make_shared<toolkit::Timer>(
+            sharedThis->_conTime = std::make_shared<Timer>(
                 timeoutSec,
+                sharedThis->_poller,
                 [connectCB]() {
                     connectCB(SocketException(Errcode::Err_timeout, "Connect timeout."));
                     return false;
-                },
-                sharedThis->_poller);
+                });
         });
 }
 
@@ -220,31 +222,31 @@ void Socket::onConnected(const SocketFD::Ptr &sock, const onErrCB &errcb) {
     errcb(err);
 };
 
-// 转toolkit::Buffer::Ptr -> myNet::BufferRaw::Ptr
-BufferRaw::Ptr translateToolkitBufferRaw(toolkit::BufferRaw::Ptr that) {
-    auto t = std::make_shared<BufferRaw>();
-    t->assign(that->data(), that->size());
-    t->setCapacity(that->getCapacity());
-    return t;
-}
+// // 转toolkit::Buffer::Ptr -> myNet::BufferRaw::Ptr
+// BufferRaw::Ptr translateToolkitBufferRaw(toolkit::BufferRaw::Ptr that) {
+//     auto t = std::make_shared<BufferRaw>();
+//     t->assign(that->data(), that->size());
+//     t->setCapacity(that->getCapacity());
+//     return t;
+// }
 
 // 注册事件
 bool Socket::attachEvent(const SocketFD::Ptr &sock) {
     std::weak_ptr<Socket> weakThis = shared_from_this();
     std::weak_ptr<SocketFD> weakSock = sock;
     _enableRecv = true;
-    _readBuffer = translateToolkitBufferRaw(_poller->getSharedBuffer());
+    _readBuffer = _poller->getSharedBuffer();
     auto isUDP = (sock->getType() == SocketType::Socket_UDP);
 
     return 0 ==
-           _poller->addEvent(sock->getFd(), toolkit::EventPoller::Event_Read | toolkit::EventPoller::Event_Write | toolkit::EventPoller::Event_Error,
+           _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Write | EventPoller::Event_Error,
                              [weakThis, weakSock, isUDP](int event) {
                                  auto sharedThis = weakThis.lock();
                                  auto sharedSock = weakSock.lock();
                                  if (sharedThis && sharedSock) {
-                                     if (event & toolkit::EventPoller::Event_Read) sharedThis->onRead(sharedSock, isUDP);
-                                     if (event & toolkit::EventPoller::Event_Write) sharedThis->onWriteable(sharedSock);
-                                     if (event & toolkit::EventPoller::Event_Error) sharedThis->emitErr(getSocketErr(sharedSock));
+                                     if (event & EventPoller::Event_Read) sharedThis->onRead(sharedSock, isUDP);
+                                     if (event & EventPoller::Event_Write) sharedThis->onWriteable(sharedSock);
+                                     if (event & EventPoller::Event_Error) sharedThis->emitErr(getSocketErr(sharedSock));
                                  }
                              });
 }
@@ -252,7 +254,7 @@ bool Socket::attachEvent(const SocketFD::Ptr &sock) {
 int Socket::onAccept(const SocketFD::Ptr &sock, int event) noexcept {
     int fd;
     while (true) {
-        if (event & toolkit::EventPoller::Event_Read) {
+        if (event & EventPoller::Event_Read) {
             do {
                 fd = static_cast<int>(accept(sock->getFd(), nullptr, nullptr));
             } while (-1 == fd && UV_EINTR == uv_translate_posix_error(errno));
@@ -309,7 +311,7 @@ int Socket::onAccept(const SocketFD::Ptr &sock, int event) noexcept {
             }
         }
 
-        if (event & toolkit::EventPoller::Event_Error) {
+        if (event & EventPoller::Event_Error) {
             auto ex = getSocketErr(sock);
             emitErr(ex);
             ErrorL << "TCP listener occurred a err: " << ex.what();
@@ -371,7 +373,7 @@ bool Socket::listen(const SocketFD::Ptr &sock) {
     _enableRecv = true;
 
     if (-1 ==
-        _poller->addEvent(sock->getFd(), toolkit::EventPoller::Event_Read | toolkit::EventPoller::Event_Error,
+        _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Error,
                           [weakThis, weakSock](int event) {
                               auto sharedThis = weakThis.lock();
                               auto sharedSock = weakSock.lock();
@@ -472,9 +474,9 @@ void Socket::enableRecv(bool enabled) {
     if (_enableRecv == enabled) return;
     _enableRecv = enabled;
     _poller->modifyEvent(getFd(),
-                         (_enableRecv ? toolkit::EventPoller::Event_Read : 0) |
-                             (_sendable ? 0 : toolkit::EventPoller::Event_Write) |  // 可发送时不可写
-                             toolkit::EventPoller::Event_Error);
+                         (_enableRecv ? EventPoller::Event_Read : 0) |
+                             (_sendable ? 0 : EventPoller::Event_Write) |  // 可发送时不可写
+                             EventPoller::Event_Error);
 };
 
 void Socket::setSendTimeOutSec(uint32_t sec) {
@@ -496,7 +498,7 @@ SocketType Socket::getType() const {
     if (!_socketFd) return SocketType::Socket_Invalid;
     return _socketFd->getType();
 };
-const toolkit::EventPoller::Ptr &Socket::getPoller() const { return _poller; };
+const EventPoller::Ptr &Socket::getPoller() const { return _poller; };
 
 bool Socket::cloneFromListenSocket(const Socket &socket) {
     auto sock = cloneSocketFd(socket);
@@ -638,13 +640,13 @@ void Socket::onFlush() {
 void Socket::startWriteableEvent(const SocketFD::Ptr &sock) {
     _sendable = false;
     _poller->modifyEvent(sock->getFd(),
-                         (_enableRecv ? toolkit::EventPoller::Event_Read : 0) | toolkit::EventPoller::Event_Write | toolkit::EventPoller::Event_Error);
+                         (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Write | EventPoller::Event_Error);
 };
 
 void Socket::stopWriteableEvent(const SocketFD::Ptr &sock) {
     _sendable = true;
     _poller->modifyEvent(sock->getFd(),
-                         (_enableRecv ? toolkit::EventPoller::Event_Read : 0) | toolkit::EventPoller::Event_Error);
+                         (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Error);
 };
 bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
     std::list<BufferList::Ptr> sendBufSending;
@@ -766,7 +768,7 @@ void SocketHelper::setOnCreateSocket(Socket::onCreateSocketCB createSocketCB) {
     if (createSocketCB) {
         _createSocketCB = createSocketCB;
     } else {
-        _createSocketCB = [](const toolkit::EventPoller::Ptr &poller) {
+        _createSocketCB = [](const EventPoller::Ptr &poller) {
             return Socket::createSocket(poller, false);
         };
     }
@@ -784,8 +786,8 @@ int SocketHelper::flashAll() {
 const Socket::Ptr &SocketHelper::getSocket() const {
     return _sock;
 };
-const toolkit::EventPoller::Ptr &SocketHelper::getPoller() const {
-    // assert(_poller); // 这儿去掉会怎么样
+const EventPoller::Ptr &SocketHelper::getPoller() const {
+    assert(_poller);  // 这儿去掉会怎么样
     return _poller;
 };
 std::string SocketHelper::get_localIP() {
@@ -805,10 +807,10 @@ uint16_t SocketHelper::get_peerPort() {
     return _peerPort;
 };
 
-toolkit::Task::Ptr SocketHelper::async(toolkit::TaskIn task, bool maySync) {
+Task::Ptr SocketHelper::async(TaskIn task, bool maySync) {
     return _poller->async(std::move(task), maySync);
 };
-toolkit::Task::Ptr SocketHelper::async_first(toolkit::TaskIn task, bool maySync) {
+Task::Ptr SocketHelper::async_first(TaskIn task, bool maySync) {
     return _poller->async_first(std::move(task), maySync);
 };
 
@@ -824,7 +826,7 @@ void SocketHelper::shutdown(const SocketException &socketException) {
     }
 };
 
-void SocketHelper::setPoller(const toolkit::EventPoller::Ptr &poller) {
+void SocketHelper::setPoller(const EventPoller::Ptr &poller) {
     _poller = poller;
 };
 void SocketHelper::setSock(const Socket::Ptr &sock) {

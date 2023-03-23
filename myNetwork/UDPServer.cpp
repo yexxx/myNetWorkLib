@@ -31,7 +31,7 @@ static std::string makeSockId(sockaddr* addr, int) {
     }
 }
 namespace myNet {
-UDPServer::UDPServer(const toolkit::EventPoller::Ptr& poller) : Server(poller) {
+UDPServer::UDPServer(const EventPoller::Ptr& poller) : Server(poller) {
     setOnCreateSocket(nullptr);
     _socket = createSocket(_poller);
     _socket->setOnRead([this](const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
@@ -56,7 +56,7 @@ void UDPServer::setOnCreateSocket(onCreateSocketCB cb) {
     if (cb) {
         _onCreateSocketCB = cb;
     } else {
-        _onCreateSocketCB = [](const toolkit::EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) { return Socket::createSocket(poller, false); };
+        _onCreateSocketCB = [](const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) { return Socket::createSocket(poller, false); };
     }
     // 设置克隆服务器创建socket的方式
     if (!_cloned) {
@@ -89,9 +89,9 @@ void UDPServer::onManageSession() {
         tmpSessionMap = _sessionMap;
     }
 
-    toolkit::EventPollerPool::Instance().for_each(
-        [tmpSessionMap](const toolkit::TaskExecutor::Ptr& executor) {
-            auto poller = std::dynamic_pointer_cast<toolkit::EventPoller>(executor);
+    EventPollerPool::Instance().for_each(
+        [tmpSessionMap](const TaskExecutor::Ptr& executor) {
+            auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
             if (!poller) return;
             poller->async(
                 [tmpSessionMap]() {
@@ -254,7 +254,7 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
     return static_cast<Session::Ptr>(nullptr);
 }
 
-Socket::Ptr UDPServer::createSocket(const toolkit::EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
+Socket::Ptr UDPServer::createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
     return _onCreateSocketCB(poller, buf, addr, addrLen);
 }
 

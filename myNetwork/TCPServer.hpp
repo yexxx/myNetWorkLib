@@ -1,7 +1,8 @@
 #ifndef TCPServer_h
 #define TCPServer_h
 
-#include "Poller/Timer.h"
+// #include "Poller/Timer.h"
+#include "../myPoller/EventPollerApp.hpp"
 #include "Server.hpp"
 #include "uv_errno.hpp"
 
@@ -11,7 +12,7 @@ class TCPServer : public Server {
 public:
     using Ptr = std::shared_ptr<TCPServer>;
 
-    explicit TCPServer(const toolkit::EventPoller::Ptr& poller = nullptr);
+    explicit TCPServer(const EventPoller::Ptr& poller = nullptr);
     ~TCPServer() override;
 
     template <typename SessionType>
@@ -34,16 +35,16 @@ protected:
 private:
     void onManagerSession();
 
-    TCPServer::Ptr getServer(const toolkit::EventPoller*) const;
+    TCPServer::Ptr getServer(const EventPoller*) const;
 
     bool _isOnManager{false};
     const TCPServer* _parent{nullptr};
     Socket::Ptr _socket;
-    std::shared_ptr<toolkit::Timer> _timer;
+    std::shared_ptr<Timer> _timer;
     Socket::onCreateSocketCB _onCreateSocket;
     std::unordered_map<SessionHelper*, SessionHelper::Ptr> _sessionMap;
     std::function<SessionHelper::Ptr(const TCPServer::Ptr&, const Socket::Ptr&)> _sessionBuilder;
-    std::unordered_map<const toolkit::EventPoller*, Ptr> _clonedServer;
+    std::unordered_map<const EventPoller*, Ptr> _clonedServer;
 };
 
 template <typename SessionType>
@@ -60,18 +61,17 @@ inline void TCPServer::start(uint16_t port, const std::string& host, uint32_t ba
     }
 
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
-    _timer = std::make_shared<toolkit::Timer>(
-        2.0f,
+    _timer = std::make_shared<Timer>(
+        2.0f, _poller,
         [weakThis]() -> bool {
             auto strongThis = weakThis.lock();
             if (!strongThis) return false;
             strongThis->onManagerSession();
             return true;
-        },
-        _poller);
+        });
 
-    toolkit::EventPollerPool::Instance().for_each([&](const toolkit::TaskExecutor::Ptr& excutor) {
-        toolkit::EventPoller::Ptr poller = std::dynamic_pointer_cast<toolkit::EventPoller>(excutor);
+    EventPollerPool::Instance().for_each([&](const TaskExecutor::Ptr& excutor) {
+        EventPoller::Ptr poller = std::dynamic_pointer_cast<EventPoller>(excutor);
         if (poller == _poller || !poller) return;
         auto& ref = _clonedServer[poller.get()];
         if (!ref) {

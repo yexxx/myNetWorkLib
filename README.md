@@ -12,15 +12,9 @@
 
 将会完成
 
-  1. 线程库
-     - TaskExcuter.cpp:134
-     - WorkThreadPool.hpp:31, WorkThreadPool.hpp:36
-  2. 轮询器库
-
-可能过段时间再完成
-
    1. TaskExcutor.hpp:13 ：时间管理库
    2. 日志库（ZLToolKit 中的WarnL, DebugL 等）
+   3. 全面整理代码
 
 ## 待解决错误
 
@@ -35,3 +29,23 @@
 3. UDPServer.cpp:216
    - 利用RAII特性使用`std::unique_ptr<std::nullptr_t, std::function<void(void*)>> deleter()`的自定义析构器时必须要new 一个变量，不然无法正确触发析构
    - 使用`shared_ptr<void>` 时可使用nullptr，不存在上述问题
+4. 将构造设为隐私方法时的单例问题：
+   - 正确写法
+  
+      ```cpp
+      static WorkThreadPool& Instance() {
+         static std::shared_ptr<WorkThreadPool> sharedRet(new WorkThreadPool());
+         static auto& ret = *sharedRet;
+         return ret;
+      }
+      ```
+
+   - 错误写法：
+
+      ```cpp
+      static WorkThreadPool& Instance() {
+         static auto sharedRet =   std::make_shared<WorkThreadPool>();
+         static auto& ret = *sharedRet;
+         return ret;
+      }
+      ```

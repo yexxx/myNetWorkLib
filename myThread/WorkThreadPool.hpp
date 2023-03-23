@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "Poller/EventPoller.h"
+#include "../myPoller/EventPoller.hpp"
 #include "TaskExecutor.hpp"
 #include "ThreadPool.hpp"
 
@@ -17,7 +17,7 @@ public:
     using Ptr = std::shared_ptr<WorkThreadPool>;
 
     static WorkThreadPool& Instance() {
-        static auto sharedRet = std::shared_ptr<WorkThreadPool>();
+        static std::shared_ptr<WorkThreadPool> sharedRet(new WorkThreadPool());
         static auto& ret = *sharedRet;
         return ret;
     }
@@ -26,17 +26,15 @@ public:
 
     static void setEnableCpuAffinity(bool enable) { enableCpuAffinity = enable; };
 
-    toolkit::EventPoller::Ptr getPoller() {
-        // 类型转换会出错
-        return std::dynamic_pointer_cast<toolkit::EventPoller>(getExecutor());
+    EventPoller::Ptr getPoller() {
+        return std::dynamic_pointer_cast<EventPoller>(getExecutor());
     };
 
-    toolkit::EventPoller::Ptr getFirstPoller() {
-        // 类型转换会出错
-        return std::dynamic_pointer_cast<toolkit::EventPoller>(_threads.front());
+    EventPoller::Ptr getFirstPoller() {
+        return std::dynamic_pointer_cast<EventPoller>(_threads.front());
     };
 
-protected:
+private:
     WorkThreadPool() {
         addPoller("WorkPoller", poolSize, ThreadPool::PRIORITY_LOWEST, false, enableCpuAffinity);
     };

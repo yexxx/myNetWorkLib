@@ -8,9 +8,9 @@ namespace myNet {
 class UDPServer : public Server {
 public:
     using Ptr = std::shared_ptr<UDPServer>;
-    using onCreateSocketCB = std::function<Socket::Ptr(const toolkit::EventPoller::Ptr&, const Buffer::Ptr&, sockaddr*, int)>;
+    using onCreateSocketCB = std::function<Socket::Ptr(const EventPoller::Ptr&, const Buffer::Ptr&, sockaddr*, int)>;
 
-    explicit UDPServer(const toolkit::EventPoller::Ptr& poller = nullptr);
+    explicit UDPServer(const EventPoller::Ptr& poller = nullptr);
     ~UDPServer() override;
 
     // 开始监听服务器
@@ -45,11 +45,11 @@ private:
     const Session::Ptr& createSession(const std::string& id, const Buffer::Ptr& buf, sockaddr* addr, int addrLen);
 
     // 创建Socket
-    Socket::Ptr createSocket(const toolkit::EventPoller::Ptr& poller, const Buffer::Ptr& buf = nullptr, sockaddr* addr = nullptr, int addrLen = 0);
+    Socket::Ptr createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf = nullptr, sockaddr* addr = nullptr, int addrLen = 0);
 
     bool _cloned{false};
     Socket::Ptr _socket;
-    std::shared_ptr<toolkit::Timer> _timer;
+    std::shared_ptr<Timer> _timer;
     onCreateSocketCB _onCreateSocketCB;
 
     // recursive_mutex 减小死锁可能性, 但效率不如mutex; 可能从其它Server复制,所以用shared_ptr
@@ -57,7 +57,7 @@ private:
     // key: socket hash id, value: sessionHelper
     std::shared_ptr<std::unordered_map<std::string, SessionHelper::Ptr>> _sessionMap;
     // 主server 持有cloned server 的引用
-    std::unordered_map<toolkit::EventPoller*, Ptr> _clonedServer;
+    std::unordered_map<EventPoller*, Ptr> _clonedServer;
     // Session 构建器, 用于构建不同类型的Session(针对不同应用场景实现不同的Session子类，利用多态实现不同功能)
     std::function<SessionHelper::Ptr(const UDPServer::Ptr&, const Socket::Ptr&)> _sessionBuilder;
 };
@@ -67,7 +67,7 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
     _sessionBuilder = [](const UDPServer::Ptr& server, const Socket::Ptr sock) {
         auto session = std::make_shared<SessionType>(sock);
         auto tmpOnCreateSocketCB = server->_onCreateSocketCB;
-        session->setOnCreateSocket([tmpOnCreateSocketCB](const toolkit::EventPoller::Ptr& poller) {
+        session->setOnCreateSocket([tmpOnCreateSocketCB](const EventPoller::Ptr& poller) {
             return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0);
         });
         std::weak_ptr<Server> tserver = server;
@@ -84,8 +84,8 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
 
     // 父类的enable_shared_from_this, 子类用要强制转换
     std::weak_ptr<UDPServer> weakThis = std::dynamic_pointer_cast<UDPServer>(shared_from_this());
-    _timer = std::make_shared<toolkit::Timer>(
-        2.0f,
+    _timer = std::make_shared<Timer>(
+        2.0f, _poller,
         [weakThis]() -> bool {
             auto strong_self = weakThis.lock();
             if (!strong_self) {
@@ -93,13 +93,12 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
             }
             strong_self->onManageSession();
             return true;
-        },
-        _poller);
+        });
 
     //clone server至不同线程，让udp server支持多线程
-    toolkit::EventPollerPool::Instance().for_each(
-        [&](const toolkit::TaskExecutor::Ptr& executor) {
-            auto poller = std::dynamic_pointer_cast<toolkit::EventPoller>(executor);
+    EventPollerPool::Instance().for_each(
+        [&](const TaskExecutor::Ptr& executor) {
+            auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
             if (poller == _poller || !poller) {
                 return;
             }

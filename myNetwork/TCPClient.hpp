@@ -14,7 +14,7 @@ class TCPClient : public std::enable_shared_from_this<TCPClient>, public SocketH
 public:
     using Ptr = std::shared_ptr<TCPClient>;
 
-    TCPClient(const toolkit::EventPoller::Ptr& poller = nullptr);
+    TCPClient(const EventPoller::Ptr& poller = nullptr);
     ~TCPClient() override{};
 
     // 不是Socket 的connect
@@ -54,7 +54,7 @@ private:
     void onSocketConnect(const SocketException& e);
 
     std::string _netAdapter{"::"};
-    std::shared_ptr<toolkit::Timer> _timer;
+    std::shared_ptr<Timer> _timer;
 };
 
 }  // namespace myNet

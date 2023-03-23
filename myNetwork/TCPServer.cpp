@@ -1,15 +1,15 @@
 #include "TCPServer.hpp"
 
 namespace myNet {
-TCPServer::TCPServer(const toolkit::EventPoller::Ptr& poller) : Server(poller) {
+TCPServer::TCPServer(const EventPoller::Ptr& poller) : Server(poller) {
     setOnCreateSocket(nullptr);
     _socket = _onCreateSocket(poller);
     // accept 之前，创建socket
     _socket->setOnCreateSocket(
-        [this](const toolkit::EventPoller::Ptr& poller) {
+        [this](const EventPoller::Ptr& poller) {
             // 这个地方会报错，先注释掉
             assert(_poller->isCurrentThread());
-            return _onCreateSocket(toolkit::EventPollerPool::Instance().getPoller(false));
+            return _onCreateSocket(EventPollerPool::Instance().getPoller(false));
         });
     _socket->setOnAccept(
         [this](Socket::Ptr& sock, std::shared_ptr<void>& complete) {
@@ -36,7 +36,7 @@ void TCPServer::setOnCreateSocket(Socket::onCreateSocketCB cb) {
     if (cb) {
         _onCreateSocket = std::move(cb);
     } else {
-        _onCreateSocket = [](const toolkit::EventPoller::Ptr& poller) {
+        _onCreateSocket = [](const EventPoller::Ptr& poller) {
             return Socket::createSocket(poller, false);
         };
     }
@@ -54,8 +54,8 @@ void TCPServer::cloneFrom(const TCPServer& that) {
     _socket->cloneFromListenSocket(*(that._socket));
 
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
-    _timer = std::make_shared<toolkit::Timer>(
-        2.0f,
+    _timer = std::make_shared<Timer>(
+        2.0f, _poller,
         [weakThis]() -> bool {
             auto strongThis = weakThis.lock();
             if (!strongThis) {
@@ -63,8 +63,7 @@ void TCPServer::cloneFrom(const TCPServer& that) {
             }
             strongThis->onManagerSession();
             return true;
-        },
-        _poller);
+        });
 
     _parent = &that;
 }
@@ -150,7 +149,7 @@ void TCPServer::onManagerSession() {
     };
 }
 
-TCPServer::Ptr TCPServer::getServer(const toolkit::EventPoller* poller) const {
+TCPServer::Ptr TCPServer::getServer(const EventPoller* poller) const {
     auto parent = (_parent ? _parent : this);
     auto& cloneServer = parent->_clonedServer;
 

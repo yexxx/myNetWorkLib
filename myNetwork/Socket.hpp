@@ -12,8 +12,10 @@
 #include <string>
 
 #include "Buffer.hpp"
-#include "Poller/EventPoller.h"
-#include "Poller/Timer.h"
+// #include "Poller/EventPoller.h"
+#include "../myPoller/EventPoller.hpp"
+// #include "Poller/Timer.h"
+#include "../myPoller/EventPollerApp.hpp"
 #include "Util/SpeedStatistic.h"
 
 namespace myNet {
@@ -87,11 +89,11 @@ private:
 class SocketFD : public noncopyable {
 public:
     using Ptr = std::shared_ptr<SocketFD>;
-    SocketFD(int fd, SocketType type, const toolkit::EventPoller::Ptr &poller) {
+    SocketFD(int fd, SocketType type, const EventPoller::Ptr &poller) {
         _num = std::make_shared<SocketNum>(fd, type);
         _poller = poller;
     }
-    SocketFD(const SocketFD &socketFD, const toolkit::EventPoller::Ptr &poller) {
+    SocketFD(const SocketFD &socketFD, const EventPoller::Ptr &poller) {
         _num = socketFD._num;
         _poller = socketFD._poller;
         if (poller == _poller) { throw std::invalid_argument("Copy a SocketFD with a same poller."); }
@@ -106,7 +108,7 @@ public:
 
 private:
     SocketNum::Ptr _num;
-    toolkit::EventPoller::Ptr _poller;
+    EventPoller::Ptr _poller;
 };
 
 // socket信息
@@ -131,14 +133,14 @@ public:
     using onErrCB = std::function<void(const SocketException &err)>;
     using onAcceptCB = std::function<void(Ptr &sock, std::shared_ptr<void> &complete)>;
     using onFlushCB = std::function<bool()>;
-    using onCreateSocketCB = std::function<Ptr(const toolkit::EventPoller::Ptr &poller)>;
+    using onCreateSocketCB = std::function<Ptr(const EventPoller::Ptr &poller)>;
     using onSendResultCB = std::function<void(const Buffer::Ptr &buffer, bool sendState)>;
     using asyncConnectCB = std::shared_ptr<std::function<void(int)>>;
 
-    Socket(const toolkit::EventPoller::Ptr poller = nullptr, bool enableMutex = true);
+    Socket(const EventPoller::Ptr poller = nullptr, bool enableMutex = true);
     ~Socket() override;
 
-    static Ptr createSocket(const toolkit::EventPoller::Ptr &poller = nullptr, bool enable_mutex = true);
+    static Ptr createSocket(const EventPoller::Ptr &poller = nullptr, bool enable_mutex = true);
 
     virtual void setOnRead(onReadCB &&readCB);
     virtual void setOnErr(onErrCB &&errCB);
@@ -176,7 +178,7 @@ public:
 
     virtual int getFd() const;
     virtual SocketType getType() const;
-    virtual const toolkit::EventPoller::Ptr &getPoller() const;
+    virtual const EventPoller::Ptr &getPoller() const;
 
     // 从另一个socket克隆，实现一个socket被多个poller监听
     // 让this监听传递的socket
@@ -229,7 +231,7 @@ private:
     std::atomic<bool> _sendable{true};
 
     // tcp连接超时定时器
-    toolkit::Timer::Ptr _conTime;
+    Timer::Ptr _conTime;
     // 异步tcp连接结果回调
     asyncConnectCB _asyncConnectCB;
     // 缓存清空(flush)计时器
@@ -237,7 +239,7 @@ private:
 
     BufferRaw::Ptr _readBuffer;
     SocketFD::Ptr _socketFd;
-    toolkit::EventPoller::Ptr _poller;
+    EventPoller::Ptr _poller;
     // 读socket文件描述符时上锁（跨线程）
     mutable MutexWrapper _mtxSocketFd;
 
@@ -278,7 +280,7 @@ public:
     virtual ssize_t send(Buffer::Ptr buf) = 0;
 };
 
-class SocketHelper : public SocketSender, public SocketInfo, public toolkit::TaskExecutorInterface {
+class SocketHelper : public SocketSender, public SocketInfo, public TaskExecutorInterface {
 public:
     SocketHelper(const Socket::Ptr &sock);
     ~SocketHelper() = default;
@@ -295,20 +297,20 @@ public:
     int flashAll();
 
     const Socket::Ptr &getSocket() const;
-    const toolkit::EventPoller::Ptr &getPoller() const;
+    const EventPoller::Ptr &getPoller() const;
     std::string get_localIP() override;
     uint16_t get_localPort() override;
     std::string get_peerIP() override;
     uint16_t get_peerPort() override;
 
-    toolkit::Task::Ptr async(toolkit::TaskIn task, bool maySync = true) override;
-    toolkit::Task::Ptr async_first(toolkit::TaskIn task, bool maySync = true) override;
+    Task::Ptr async(TaskIn task, bool maySync = true) override;
+    Task::Ptr async_first(TaskIn task, bool maySync = true) override;
 
     ssize_t send(Buffer::Ptr buf) override;
     void shutdown(const SocketException &socketException = SocketException(Errcode::Err_shutdown, "shutdown")) override;
 
 protected:
-    void setPoller(const toolkit::EventPoller::Ptr &poller);
+    void setPoller(const EventPoller::Ptr &poller);
     void setSock(const Socket::Ptr &sock);
 
 private:
@@ -318,7 +320,7 @@ private:
     std::string _localIP{""};
     std::string _peerIP{""};
     Socket::Ptr _sock;
-    toolkit::EventPoller::Ptr _poller;
+    EventPoller::Ptr _poller;
     Socket::onCreateSocketCB _createSocketCB;
 };
 

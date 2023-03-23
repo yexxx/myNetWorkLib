@@ -1,10 +1,10 @@
 #include "TCPClient.hpp"
 
 namespace myNet {
-TCPClient::TCPClient(const toolkit::EventPoller::Ptr& poller) : SocketHelper(nullptr) {
-    setPoller(poller ? poller : toolkit::EventPollerPool::Instance().getPoller());
+TCPClient::TCPClient(const EventPoller::Ptr& poller) : SocketHelper(nullptr) {
+    setPoller(poller ? poller : EventPollerPool::Instance().getPoller());
     setOnCreateSocket(
-        [](const toolkit::EventPoller::Ptr& poller) {
+        [](const EventPoller::Ptr& poller) {
             return Socket::createSocket(poller, true);
         });
 }
@@ -12,8 +12,8 @@ TCPClient::TCPClient(const toolkit::EventPoller::Ptr& poller) : SocketHelper(nul
 void TCPClient::connect(const std::string& url, uint16_t port, float timeoutSec, uint16_t localPort) {
     auto weakThis = weak_from_this();
 
-    _timer = std::make_shared<toolkit::Timer>(
-        2.0f,
+    _timer = std::make_shared<Timer>(
+        2.0f, getPoller(),
         [weakThis]() {
             auto sharedThis = weakThis.lock();
             if (!sharedThis) {
@@ -22,8 +22,7 @@ void TCPClient::connect(const std::string& url, uint16_t port, float timeoutSec,
 
             sharedThis->onManager();
             return true;
-        },
-        getPoller());
+        });
 
     setSock(createSocket());
 
