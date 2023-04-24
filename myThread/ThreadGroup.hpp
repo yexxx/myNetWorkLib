@@ -1,6 +1,7 @@
 #ifndef ThreadGroup_hpp
 #define ThreadGroup_hpp
 
+#include <memory>
 #include <stdexcept>
 #include <thread>
 #include <unordered_map>

@@ -5,6 +5,9 @@
 using namespace std;
 using namespace myNet;
 
+long long i = 0;
+long long MB_lst = 0;
+
 class EchoSession : public Session {
 public:
     EchoSession(const Socket::Ptr &pSock) : Session(pSock) {
@@ -15,7 +18,13 @@ public:
     }
 
     void onRecv(const Buffer::Ptr &buffer) override {
-        WarnL << buffer->toString();
+        i += (buffer->toString()).size();
+        // WarnL << i;
+        if (i / (1000 * 1000) > MB_lst) {
+            WarnL << "Recv " << i / (1000 * 1000) << " MBytes data";
+            MB_lst = i / (1000 * 1000);
+        }
+        // WarnL << buffer->toString();
         send(buffer);
     }
     void onErr(const SocketException &err) override { WarnL << err.what(); }

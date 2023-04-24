@@ -5,6 +5,7 @@
 
 #include "Network/Buffer.h"
 #include "Util/logger.h"
+#include "uv_errno.hpp"
 
 namespace myNet {
 
@@ -98,7 +99,7 @@ ssize_t BufferSendMsg::send(int fd, int flags) {
             msg.msg_controllen = 0;
             msg.msg_flags = flags;
             sendingSize = sendmsg(fd, &msg, flags);
-        } while (-1 == sendingSize && 4 == errno);  // 4: 用户打断
+        } while (-1 == sendingSize && UV_EINTR == uv_translate_posix_error(errno));
 
         if (sendingSize >= (ssize_t)_remainSize) {
             _remainSize = 0;

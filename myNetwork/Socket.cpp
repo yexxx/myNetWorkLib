@@ -392,10 +392,10 @@ ssize_t Socket::send(const char *buf, size_t size, sockaddr *addr, socklen_t add
     bufPtr->assign(buf, strlen(buf));
     return send(bufPtr, addr, addrLen, tryFlush);
 };
-ssize_t Socket::send(const std::string buf, sockaddr *addr, socklen_t addrLen, bool tryFlush) {
+ssize_t Socket::send(std::string buf, sockaddr *addr, socklen_t addrLen, bool tryFlush) {
     return send(std::make_shared<BufferString>(buf), addr, addrLen, tryFlush);
 };
-ssize_t Socket::send(const Buffer::Ptr buf, sockaddr *addr, socklen_t addrLen, bool tryFlush) {
+ssize_t Socket::send(Buffer::Ptr buf, sockaddr *addr, socklen_t addrLen, bool tryFlush) {
     if (!buf || buf->size() == 0) {
         return 0;
     }
@@ -403,10 +403,11 @@ ssize_t Socket::send(const Buffer::Ptr buf, sockaddr *addr, socklen_t addrLen, b
 
     {
         std::lock_guard<MutexWrapper> lck(_mtxSendBufWaiting);
-        if (addr) {
-            _sendBufWaiting.emplace_back(std::make_shared<BufferSock>(buf, addr, addrLen));
+        if (addr != nullptr) {
+            WarnL << "ADDDDDDDDDDDDDDDDDDDDDDDDDDR";
+            _sendBufWaiting.emplace_back(std::make_shared<BufferSock>(std::move(buf), addr, addrLen));
         } else {
-            _sendBufWaiting.emplace_back(buf);
+            _sendBufWaiting.emplace_back(std::move(buf));
         }
     }
 
@@ -673,24 +674,28 @@ bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
     }
     while (!sendBufSending.empty()) {
         auto n = sendBufSending.front()->send(sock->getFd(), _sockFlags);
+        // 发送字节数大于0
         if (n > 0) {
+            // 全部发送
             if (sendBufSending.front()->empty()) {
                 sendBufSending.pop_front();
                 continue;
-            } else {
-                if (!pollerThread) {
-                    startWriteableEvent(sock);
-                }
-                break;
             }
-        }
-
-        if (UV_EINTR == uv_translate_posix_error(errno)) {
+            // 部分发送
             if (!pollerThread) {
                 startWriteableEvent(sock);
             }
             break;
         }
+        // 发送字节数等于0
+        if (UV_EAGAIN == uv_translate_posix_error(errno)) {
+            if (!pollerThread) {
+                startWriteableEvent(sock);
+            }
+            break;
+        }
+
+        // udp发送异常就丢弃数据
         if (sock->getType() == SocketType::Socket_UDP) {
             sendBufSending.pop_front();
             WarnL << "Send udp socket[" << sock->getFd() << "] failed, data ignored: " << uv_strerror(uv_translate_posix_error(errno));
@@ -700,11 +705,20 @@ bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
         emitErr(toSocketException(uv_translate_posix_error(errno)));
         return false;
     }
-    if (pollerThread) {
-        return flushData(sock, pollerThread);
-    } else {
+
+    // 处理未发送完成的数据
+    if (!sendBufSending.empty()) {
+        // 有剩余数据
+        std::lock_guard<MutexWrapper> lck(_mtxSendBufSending);
+        sendBufSending.swap(_sendBufSending);
+        for (auto &i : sendBufSending) {
+            _sendBufSending.push_back(i);
+        }
+        // 二级缓存未全部发送完毕，说明该socket不可写，直接返回
         return true;
     }
+
+    return pollerThread ? flushData(sock, pollerThread) : true;
 };
 
 SocketSender &SocketSender::operator<<(const char *buf) {
