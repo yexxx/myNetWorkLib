@@ -9,8 +9,12 @@
 #define EPOLL_SIZE 1024
 
 // 转换poller 和epoll 所使用的事件标识符
-#define toEpoll(event) (((event)&Event_Read) ? EPOLLIN : 0) | (((event)&Event_Write) ? EPOLLOUT : 0) | (((event)&Event_Error) ? (EPOLLHUP | EPOLLERR) : 0) | (((event)&Event_LT) ? 0 : EPOLLET)
-#define toPoller(epoll_event) (((epoll_event)&EPOLLIN) ? Event_Read : 0) | (((epoll_event)&EPOLLOUT) ? Event_Write : 0) | (((epoll_event)&EPOLLHUP) ? Event_Error : 0) | (((epoll_event)&EPOLLERR) ? Event_Error : 0)
+#define toEpoll(event)                                                                                                                    \
+    (((event)&Event_Read) ? EPOLLIN : 0) | (((event)&Event_Write) ? EPOLLOUT : 0) | (((event)&Event_Error) ? (EPOLLHUP | EPOLLERR) : 0) | \
+        (((event)&Event_LT) ? 0 : EPOLLET)
+#define toPoller(epoll_event)                                                                                                                  \
+    (((epoll_event)&EPOLLIN) ? Event_Read : 0) | (((epoll_event)&EPOLLOUT) ? Event_Write : 0) | (((epoll_event)&EPOLLHUP) ? Event_Error : 0) | \
+        (((epoll_event)&EPOLLERR) ? Event_Error : 0)
 
 namespace myNet {
 
@@ -55,9 +59,7 @@ int EventPoller::addEvent(int fd, int event, PollEventCB cb) {
     }
 
     // 不是本线程的时间，异步到归属的线程处理
-    async([this, fd, event, cb]() {
-        addEvent(fd, event, std::move(const_cast<PollEventCB &>(cb)));
-    });
+    async([this, fd, event, cb]() { addEvent(fd, event, std::move(const_cast<PollEventCB &>(cb))); });
 
     return 0;
 }
@@ -65,7 +67,8 @@ int EventPoller::addEvent(int fd, int event, PollEventCB cb) {
 int EventPoller::delEvent(int fd, PollDelCB cb) {
     toolkit::TimeTicker();
     if (!cb) {
-        cb = [](bool success) {};
+        cb = [](bool success) {
+        };
     }
 
     if (isCurrentThread()) {
@@ -74,9 +77,7 @@ int EventPoller::delEvent(int fd, PollDelCB cb) {
         return success ? 0 : -1;
     }
 
-    async([this, fd, cb]() {
-        delEvent(fd, std::move(const_cast<PollDelCB &>(cb)));
-    });
+    async([this, fd, cb]() { delEvent(fd, std::move(const_cast<PollDelCB &>(cb))); });
 
     return 0;
 }
@@ -127,9 +128,7 @@ Task::Ptr EventPoller::async_first(TaskIn task, bool maySync) {
 EventPoller::DelayTask::Ptr EventPoller::doDelayTask(uint64_t delayMs, std::function<uint64_t()> task) {
     DelayTask::Ptr ret = std::make_shared<DelayTask>(std::move(task));
     auto time = toolkit::getCurrentMillisecond() + delayMs;
-    async_first([time, ret, this]() {
-        _delayTaskMap.emplace(time, ret);
-    });
+    async_first([time, ret, this]() { _delayTaskMap.emplace(time, ret); });
     return ret;
 }
 
@@ -330,4 +329,4 @@ EventPollerPool::EventPollerPool() {
     InfoL << "EventPoller created size: " << size;
 }
 
-}  //namespace myNet
+}  // namespace myNet
