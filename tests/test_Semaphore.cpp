@@ -10,23 +10,23 @@ using namespace std;
 using namespace myNet;
 
 #define MAX_TASK_SIZE (10000000)
-Semaphore g_sem;  //信号量
+Semaphore g_sem;  // 信号量
 atomic_llong g_produced(0);
 atomic_llong g_consumed(0);
 bool finish{false};
 
-//消费者线程
+// 消费者线程
 void onConsum() {
     while (!finish) {
         g_sem.wait();
         if (++g_consumed > g_produced && !finish) {
-            //如果打印这句log则表明有bug
+            // 如果打印这句log则表明有bug
             ErrorL << g_consumed << " > " << g_produced;
         }
     }
 }
 
-//生产者线程
+// 生产者线程
 void onProduce() {
     while (true) {
         ++g_produced;
@@ -38,14 +38,14 @@ void onProduce() {
 }
 
 int main() {
-    //初始化log
+    // 初始化log
     toolkit::Logger::Instance().add(std::make_shared<toolkit::ConsoleChannel>());
 
     toolkit::Ticker ticker;
     ThreadGroup thread_producer;
     for (size_t i = 0; i < thread::hardware_concurrency(); ++i) {
         thread_producer.createThread([]() {
-            //1个生产者线程
+            // cpu逻辑核心个生产者线程
             onProduce();
         });
     }
@@ -53,12 +53,12 @@ int main() {
     ThreadGroup thread_consumer;
     for (int i = 0; i < 4; ++i) {
         thread_consumer.createThread([i]() {
-            //4个消费者线程
+            // 4个消费者线程
             onConsum();
         });
     }
 
-    //等待所有生成者线程退出
+    // 等待所有生成者线程退出
     thread_producer.joinAll();
     DebugL << "生产者线程退出，耗时:" << ticker.elapsedTime() << "ms,"
            << "生产任务数:" << g_produced << ",消费任务数:" << g_consumed;
