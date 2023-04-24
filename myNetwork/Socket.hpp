@@ -20,21 +20,9 @@
 
 namespace myNet {
 
-enum class Errcode {
-    Err_sucess = 0,
-    Err_eof,
-    Err_timeout,
-    Err_refused,
-    Err_dns,
-    Err_shutdown,
-    Err_other = 0xFF
-};
+enum class Errcode { Err_sucess = 0, Err_eof, Err_timeout, Err_refused, Err_dns, Err_shutdown, Err_other = 0xFF };
 
-enum class SocketType {
-    Socket_Invalid = -1,
-    Socket_TCP = 0,
-    Socket_UDP = 1
-};
+enum class SocketType { Socket_Invalid = -1, Socket_TCP = 0, Socket_UDP = 1 };
 
 // 异常
 class SocketException : public std::exception {
@@ -96,7 +84,9 @@ public:
     SocketFD(const SocketFD &socketFD, const EventPoller::Ptr &poller) {
         _num = socketFD._num;
         _poller = socketFD._poller;
-        if (poller == _poller) { throw std::invalid_argument("Copy a SocketFD with a same poller."); }
+        if (poller == _poller) {
+            throw std::invalid_argument("Copy a SocketFD with a same poller.");
+        }
     }
 
     ~SocketFD() {
@@ -150,7 +140,8 @@ public:
     virtual void setOnSendResult(onSendResultCB &&sendResultCB);
 
     // 创建tcp客户端并异步连接服务器
-    virtual void connect(const std ::string &url, uint16_t port, const onErrCB &errCB, float timeoutSec = 5, const std::string &localIP = "::", uint16_t localPort = 0);
+    virtual void connect(const std ::string &url, uint16_t port, const onErrCB &errCB, float timeoutSec = 5,
+                         const std::string &localIP = "::", uint16_t localPort = 0);
 
     // 创建TCP监听服务器；backLog: tcp最大积压数量
     virtual bool listen(uint16_t port, const std::string &localIP = "::", int backLog = 1024);

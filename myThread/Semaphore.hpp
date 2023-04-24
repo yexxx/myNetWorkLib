@@ -14,13 +14,9 @@ namespace myNet {
 
 class Semaphore {
 public:
-    explicit Semaphore() {
-        sem_init(&_sem, 0, 0);
-    };
+    explicit Semaphore() { sem_init(&_sem, 0, 0); };
 
-    ~Semaphore() {
-        sem_destroy(&_sem);
-    };
+    ~Semaphore() { sem_destroy(&_sem); };
 
     void post(size_t n = 1) {
         while (n--) {

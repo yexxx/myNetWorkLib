@@ -4,13 +4,12 @@ namespace myNet {
 
 void myNet::Session::safeShutdown(const SocketException& ex) {
     std::weak_ptr<Session> weakThis = shared_from_this();
-    async_first(
-        [weakThis, ex]() {
-            auto sharedThis = weakThis.lock();
-            if (sharedThis) {
-                sharedThis->shutdown(ex);
-            }
-        });
+    async_first([weakThis, ex]() {
+        auto sharedThis = weakThis.lock();
+        if (sharedThis) {
+            sharedThis->shutdown(ex);
+        }
+    });
 }
 
 std::string myNet::Session::getIdentifier() const {

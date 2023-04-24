@@ -61,9 +61,7 @@ class Server : public std::enable_shared_from_this<Server> {
 public:
     using Ptr = std::shared_ptr<Server>;
 
-    explicit Server(EventPoller::Ptr poller = nullptr) {
-        _poller = (poller ? poller : EventPollerPool::Instance().getPoller());
-    };
+    explicit Server(EventPoller::Ptr poller = nullptr) { _poller = (poller ? poller : EventPollerPool::Instance().getPoller()); };
     virtual ~Server() = default;
 
 protected:

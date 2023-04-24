@@ -47,16 +47,16 @@ std::string inetNtoa(const struct in6_addr &addr) {
 
 std::string inetNtoa(const struct sockaddr *addr) {
     switch (addr->sa_family) {
-        case AF_INET: return inetNtoa(((struct sockaddr_in *)addr)->sin_addr);
-        case AF_INET6: {
-            if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)addr)->sin6_addr)) {
-                struct in_addr addr4;
-                memcpy(&addr4, 12 + (char *)&(((struct sockaddr_in6 *)addr)->sin6_addr), 4);
-                return inetNtoa(addr4);
-            }
-            return inetNtoa(((struct sockaddr_in6 *)addr)->sin6_addr);
+    case AF_INET: return inetNtoa(((struct sockaddr_in *)addr)->sin_addr);
+    case AF_INET6: {
+        if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)addr)->sin6_addr)) {
+            struct in_addr addr4;
+            memcpy(&addr4, 12 + (char *)&(((struct sockaddr_in6 *)addr)->sin6_addr), 4);
+            return inetNtoa(addr4);
         }
-        default: assert(false); return "";
+        return inetNtoa(((struct sockaddr_in6 *)addr)->sin6_addr);
+    }
+    default: assert(false); return "";
     }
 }
 
@@ -87,22 +87,22 @@ std::vector<std::pair<std::string, std::string>> getNICList() {
 }
 
 template <typename FUN>
-void for_each_netAdapter_posix(FUN &&fun) {  //type: struct ifreq *
+void for_each_netAdapter_posix(FUN &&fun) {  // type: struct ifreq *
     struct ifconf ifconf;
     char buf[1024 * 10];
-    //初始化ifconf
+    // 初始化ifconf
     ifconf.ifc_len = sizeof(buf);
     ifconf.ifc_buf = buf;
     int sockfd = ::socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0) {
         return;
     }
-    if (-1 == ioctl(sockfd, SIOCGIFCONF, &ifconf)) {  //获取所有接口信息
+    if (-1 == ioctl(sockfd, SIOCGIFCONF, &ifconf)) {  // 获取所有接口信息
         close(sockfd);
         return;
     }
     close(sockfd);
-    //接下来一个一个的获取IP地址
+    // 接下来一个一个的获取IP地址
     struct ifreq *adapter = (struct ifreq *)buf;
     for (int i = (ifconf.ifc_len / sizeof(struct ifreq)); i > 0; --i, ++adapter) {
         if (fun(adapter)) {
@@ -119,13 +119,13 @@ bool check_ip(string &address, const string &ip) {
         if (/*(addressInNetworkOrder >= 0x0A000000 && addressInNetworkOrder < 0x0E000000) ||*/
             (addressInNetworkOrder >= 0xAC100000 && addressInNetworkOrder < 0xAC200000) ||
             (addressInNetworkOrder >= 0xC0A80000 && addressInNetworkOrder < 0xC0A90000)) {
-            //A类私有IP地址：
-            //10.0.0.0～10.255.255.255
-            //B类私有IP地址：
-            //172.16.0.0～172.31.255.255
-            //C类私有IP地址：
-            //192.168.0.0～192.168.255.255
-            //如果是私有地址 说明在nat内部
+            // A类私有IP地址：
+            // 10.0.0.0～10.255.255.255
+            // B类私有IP地址：
+            // 172.16.0.0～172.31.255.255
+            // C类私有IP地址：
+            // 192.168.0.0～192.168.255.255
+            // 如果是私有地址 说明在nat内部
 
             /* 优先采用局域网地址，该地址很可能是wifi地址
              * 一般来说,无线路由器分配的地址段是BC类私有ip地址
@@ -151,7 +151,9 @@ string get_local_ip() {
 
 int main() {
     auto NCIList = getNICList();
-    for (auto &i : NCIList) { cout << i.second << " : " << i.first << endl; }
+    for (auto &i : NCIList) {
+        cout << i.second << " : " << i.first << endl;
+    }
     cout << get_local_ip() << endl;
     return 0;
 }

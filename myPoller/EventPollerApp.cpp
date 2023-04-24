@@ -1,8 +1,7 @@
 #include "EventPollerApp.hpp"
 
 namespace myNet {
-PipeEventPoller::PipeEventPoller(const EventPoller::Ptr& poller, const std::function<void(const char* buf, int size)> cb)
-    : _poller(poller) {
+PipeEventPoller::PipeEventPoller(const EventPoller::Ptr& poller, const std::function<void(const char* buf, int size)> cb) : _poller(poller) {
     if (!_poller) {
         _poller = EventPollerPool::Instance().getPoller();
     }
@@ -26,8 +25,7 @@ PipeEventPoller::~PipeEventPoller() {
     }
 }
 
-Timer::Timer(float second, const EventPoller::Ptr& poller, const std::function<bool()>& cb)
-    : _poller(poller) {
+Timer::Timer(float second, const EventPoller::Ptr& poller, const std::function<bool()>& cb) : _poller(poller) {
     if (!_poller) {
         _poller = EventPollerPool::Instance().getPoller();
     }

@@ -26,18 +26,12 @@ public:
 
     static void setEnableCpuAffinity(bool enable) { enableCpuAffinity = enable; };
 
-    EventPoller::Ptr getPoller() {
-        return std::dynamic_pointer_cast<EventPoller>(getExecutor());
-    };
+    EventPoller::Ptr getPoller() { return std::dynamic_pointer_cast<EventPoller>(getExecutor()); };
 
-    EventPoller::Ptr getFirstPoller() {
-        return std::dynamic_pointer_cast<EventPoller>(_threads.front());
-    };
+    EventPoller::Ptr getFirstPoller() { return std::dynamic_pointer_cast<EventPoller>(_threads.front()); };
 
 private:
-    WorkThreadPool() {
-        addPoller("WorkPoller", poolSize, ThreadPool::PRIORITY_LOWEST, false, enableCpuAffinity);
-    };
+    WorkThreadPool() { addPoller("WorkPoller", poolSize, ThreadPool::PRIORITY_LOWEST, false, enableCpuAffinity); };
 };
 
 }  // namespace myNet

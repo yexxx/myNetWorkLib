@@ -12,14 +12,13 @@
 
 namespace myNet {
 
-static SocketException
-toSocketException(int error) {
+static SocketException toSocketException(int error) {
     switch (error) {
-        case 0:
-        case UV_EAGAIN: return SocketException(Errcode::Err_sucess, "Success.");
-        case UV_ECONNREFUSED: return SocketException(Errcode::Err_refused, uv_strerror(uv_translate_posix_error(error)));
-        case UV_ETIMEDOUT: return SocketException(Errcode::Err_timeout, uv_strerror(uv_translate_posix_error(error)));
-        default: return SocketException(Errcode::Err_other, uv_strerror(uv_translate_posix_error(error)));
+    case 0:
+    case UV_EAGAIN: return SocketException(Errcode::Err_sucess, "Success.");
+    case UV_ECONNREFUSED: return SocketException(Errcode::Err_refused, uv_strerror(uv_translate_posix_error(error)));
+    case UV_ETIMEDOUT: return SocketException(Errcode::Err_timeout, uv_strerror(uv_translate_posix_error(error)));
+    default: return SocketException(Errcode::Err_other, uv_strerror(uv_translate_posix_error(error)));
     }
 }
 
@@ -63,8 +62,7 @@ void Socket::setOnRead(onReadCB &&readCB) {
 }
 void Socket::setOnErr(onErrCB &&errCB) {
     std::lock_guard<MutexWrapper> lck(_mtxEvent);
-    if (errCB != nullptr)
-        _onErrCB = errCB;
+    if (errCB != nullptr) _onErrCB = errCB;
     else
         _onErrCB = [](const SocketException &err) {
             WarnL << "Socket not set err callback, err: " << err.what();
@@ -72,8 +70,7 @@ void Socket::setOnErr(onErrCB &&errCB) {
 }
 void Socket::setOnAccept(onAcceptCB &&acceptCB) {
     std::lock_guard<MutexWrapper> lck(_mtxEvent);
-    if (acceptCB != nullptr)
-        _onAcceptCB = acceptCB;
+    if (acceptCB != nullptr) _onAcceptCB = acceptCB;
     else
         _onAcceptCB = [](Ptr &sock, std::shared_ptr<void> &complete) {
             WarnL << "Socket not set accept callback, peer fd: " << sock->getFd();
@@ -81,8 +78,7 @@ void Socket::setOnAccept(onAcceptCB &&acceptCB) {
 }
 void Socket::setOnFlush(onFlushCB &&flushCB) {
     std::lock_guard<MutexWrapper> lck(_mtxEvent);
-    if (flushCB != nullptr)
-        _onFlushCB = flushCB;
+    if (flushCB != nullptr) _onFlushCB = flushCB;
     else
         _onFlushCB = []() {
             return true;
@@ -90,8 +86,7 @@ void Socket::setOnFlush(onFlushCB &&flushCB) {
 };
 void Socket::setOnCreateSocket(onCreateSocketCB &&createSocketCB) {
     std::lock_guard<MutexWrapper> lck(_mtxEvent);
-    if (createSocketCB != nullptr)
-        _onCreateSocketCB = createSocketCB;
+    if (createSocketCB != nullptr) _onCreateSocketCB = createSocketCB;
     else
         _onCreateSocketCB = [](const EventPoller::Ptr &poller) {
             return nullptr;
@@ -102,108 +97,96 @@ void Socket::setOnSendResult(onSendResultCB &&sendResultCB) {
     _onSendResultCB = sendResultCB;
 };
 
-void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errCB,
-                     float timeoutSec, const std::string &localIP, uint16_t localPort) {
+void Socket::connect(const std ::string &url, uint16_t port, const onErrCB &errCB, float timeoutSec, const std::string &localIP, uint16_t localPort) {
     std::weak_ptr<Socket> weakThis = shared_from_this();
     // 异步执行
-    _poller->async(
-        [=]() /* 值传递this指针,lambda函数内可以修改类的属性值 */ {
+    _poller->async([=]() /* 值传递this指针,lambda函数内可以修改类的属性值 */ {
+        auto sharedThis = weakThis.lock();
+        if (!sharedThis) {
+            return;
+        }
+
+        // 重置当前socket
+        closeSocket();
+
+        // connect callback
+        auto connectCB = [errCB, weakThis](const SocketException &err) {
             auto sharedThis = weakThis.lock();
             if (!sharedThis) {
                 return;
             }
+            sharedThis->_asyncConnectCB = nullptr;
+            sharedThis->_conTime = nullptr;
+            if (err) {
+                std::lock_guard<MutexWrapper> lck(sharedThis->_mtxSocketFd);
+                sharedThis->_socketFd = nullptr;
+            }
+            errCB(err);
+        };
 
-            // 重置当前socket
-            closeSocket();
+        // asyncConnectCB
+        auto asyncConnectCB = std::make_shared<std::function<void(int)>>([weakThis, connectCB](int sockfd) {
+            auto sharedThis = weakThis.lock();
 
-            // connect callback
-            auto connectCB = [errCB, weakThis](const SocketException &err) {
-                auto sharedThis = weakThis.lock();
-                if (!sharedThis) {
-                    return;
+            // 错误处理
+            if (!sharedThis) {
+                if (sockfd != -1) {
+                    close(sockfd);
                 }
-                sharedThis->_asyncConnectCB = nullptr;
-                sharedThis->_conTime = nullptr;
-                if (err) {
-                    std::lock_guard<MutexWrapper> lck(sharedThis->_mtxSocketFd);
-                    sharedThis->_socketFd = nullptr;
-                }
-                errCB(err);
-            };
-
-            // asyncConnectCB
-            auto asyncConnectCB = std::make_shared<std::function<void(int)>>(
-                [weakThis, connectCB](int sockfd) {
-                    auto sharedThis = weakThis.lock();
-
-                    // 错误处理
-                    if (!sharedThis) {
-                        if (sockfd != -1) {
-                            close(sockfd);
-                        }
-                        return;
-                    }
-                    if (sockfd == -1) {
-                        connectCB(SocketException(Errcode::Err_dns, "Sockfd = -1."));
-                        return;
-                    }
-
-                    // 这儿的sockFdClass 和下面的必须一致
-                    auto sockFdClass = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
-                    std::weak_ptr<SocketFD> weakSocketFd = sockFdClass;
-
-                    // 监听socket是否可写，若可写表明已经连接成功
-                    if (-1 ==
-                        sharedThis->_poller->addEvent(
-                            sockfd, EventPoller::Event_Write,
-                            [weakThis, weakSocketFd, connectCB](int event) {
-                                auto sharedThis = weakThis.lock();
-                                auto sharedSockedFd = weakSocketFd.lock();
-                                if (sharedThis && sharedSockedFd) {
-                                    sharedThis->onConnected(sharedSockedFd, connectCB);
-                                }
-                            })) {
-                        connectCB(SocketException(Errcode::Err_other, "Add event to poller failed when start connect."));
-                        return;
-                    }
-
-                    // set fd
-                    std::lock_guard<MutexWrapper> lck(sharedThis->_mtxSocketFd);
-                    sharedThis->_socketFd = std::move(sockFdClass);
-                });
-
-            // 如果url是ip就在该线程执行，否则异步解析dns
-            if (toolkit::isIP(url.data())) {
-                // 都是异步执行的，所以这个地方第三个参数都是true
-                (*asyncConnectCB)(SocketUtil::connect(url.data(), port, true, localIP.data(), localPort));
-            } else {
-                std::weak_ptr<std::function<void(int)>> weakTask = asyncConnectCB;
-                WorkThreadPool::Instance().getExecutor()->async(
-                    [url, port, localIP, localPort, weakTask, poller = _poller]() {
-                        int tsocketFd = SocketUtil::connect(url.data(), port, true, localIP.data(), localPort);
-                        poller->async(
-                            [weakTask, tsocketFd]() {
-                                auto sharedTask = weakTask.lock();
-                                if (sharedTask) {
-                                    (*sharedTask)(tsocketFd);
-                                } else {
-                                    if (tsocketFd != -1)
-                                        close(tsocketFd);
-                                }
-                            });
-                    });
-                sharedThis->_asyncConnectCB = asyncConnectCB;
+                return;
+            }
+            if (sockfd == -1) {
+                connectCB(SocketException(Errcode::Err_dns, "Sockfd = -1."));
+                return;
             }
 
-            // 定时器
-            sharedThis->_conTime = std::make_shared<Timer>(
-                timeoutSec,
-                sharedThis->_poller,
-                [connectCB]() {
-                    connectCB(SocketException(Errcode::Err_timeout, "Connect timeout."));
-                    return false;
-                });
+            // 这儿的sockFdClass 和下面的必须一致
+            auto sockFdClass = sharedThis->makeSocketFD(sockfd, SocketType::Socket_TCP);
+            std::weak_ptr<SocketFD> weakSocketFd = sockFdClass;
+
+            // 监听socket是否可写，若可写表明已经连接成功
+            if (-1 == sharedThis->_poller->addEvent(sockfd, EventPoller::Event_Write, [weakThis, weakSocketFd, connectCB](int event) {
+                    auto sharedThis = weakThis.lock();
+                    auto sharedSockedFd = weakSocketFd.lock();
+                    if (sharedThis && sharedSockedFd) {
+                        sharedThis->onConnected(sharedSockedFd, connectCB);
+                    }
+                })) {
+                connectCB(SocketException(Errcode::Err_other, "Add event to poller failed when start connect."));
+                return;
+            }
+
+            // set fd
+            std::lock_guard<MutexWrapper> lck(sharedThis->_mtxSocketFd);
+            sharedThis->_socketFd = std::move(sockFdClass);
         });
+
+        // 如果url是ip就在该线程执行，否则异步解析dns
+        if (toolkit::isIP(url.data())) {
+            // 都是异步执行的，所以这个地方第三个参数都是true
+            (*asyncConnectCB)(SocketUtil::connect(url.data(), port, true, localIP.data(), localPort));
+        } else {
+            std::weak_ptr<std::function<void(int)>> weakTask = asyncConnectCB;
+            WorkThreadPool::Instance().getExecutor()->async([url, port, localIP, localPort, weakTask, poller = _poller]() {
+                int tsocketFd = SocketUtil::connect(url.data(), port, true, localIP.data(), localPort);
+                poller->async([weakTask, tsocketFd]() {
+                    auto sharedTask = weakTask.lock();
+                    if (sharedTask) {
+                        (*sharedTask)(tsocketFd);
+                    } else {
+                        if (tsocketFd != -1) close(tsocketFd);
+                    }
+                });
+            });
+            sharedThis->_asyncConnectCB = asyncConnectCB;
+        }
+
+        // 定时器
+        sharedThis->_conTime = std::make_shared<Timer>(timeoutSec, sharedThis->_poller, [connectCB]() {
+            connectCB(SocketException(Errcode::Err_timeout, "Connect timeout."));
+            return false;
+        });
+    });
 }
 
 void Socket::onConnected(const SocketFD::Ptr &sock, const onErrCB &errcb) {
@@ -238,17 +221,16 @@ bool Socket::attachEvent(const SocketFD::Ptr &sock) {
     _readBuffer = _poller->getSharedBuffer();
     auto isUDP = (sock->getType() == SocketType::Socket_UDP);
 
-    return 0 ==
-           _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Write | EventPoller::Event_Error,
-                             [weakThis, weakSock, isUDP](int event) {
-                                 auto sharedThis = weakThis.lock();
-                                 auto sharedSock = weakSock.lock();
-                                 if (sharedThis && sharedSock) {
-                                     if (event & EventPoller::Event_Read) sharedThis->onRead(sharedSock, isUDP);
-                                     if (event & EventPoller::Event_Write) sharedThis->onWriteable(sharedSock);
-                                     if (event & EventPoller::Event_Error) sharedThis->emitErr(getSocketErr(sharedSock));
-                                 }
-                             });
+    return 0 == _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Write | EventPoller::Event_Error,
+                                  [weakThis, weakSock, isUDP](int event) {
+                                      auto sharedThis = weakThis.lock();
+                                      auto sharedSock = weakSock.lock();
+                                      if (sharedThis && sharedSock) {
+                                          if (event & EventPoller::Event_Read) sharedThis->onRead(sharedSock, isUDP);
+                                          if (event & EventPoller::Event_Write) sharedThis->onWriteable(sharedSock);
+                                          if (event & EventPoller::Event_Error) sharedThis->emitErr(getSocketErr(sharedSock));
+                                      }
+                                  });
 }
 
 int Socket::onAccept(const SocketFD::Ptr &sock, int event) noexcept {
@@ -259,7 +241,9 @@ int Socket::onAccept(const SocketFD::Ptr &sock, int event) noexcept {
                 fd = static_cast<int>(accept(sock->getFd(), nullptr, nullptr));
             } while (-1 == fd && UV_EINTR == uv_translate_posix_error(errno));
             if (fd == -1) {
-                if (UV_EAGAIN == uv_translate_posix_error(errno)) { return 0; }  // 没有新连接
+                if (UV_EAGAIN == uv_translate_posix_error(errno)) {
+                    return 0;
+                }  // 没有新连接
                 emitErr(toSocketException(errno));
                 // 错误信息：Accept socket faild
                 return -1;
@@ -291,16 +275,15 @@ int Socket::onAccept(const SocketFD::Ptr &sock, int event) noexcept {
 
             auto peerSockFd = peerSock->setPeerSock(fd);
 
-            std::shared_ptr<void> completed(nullptr,
-                                            [peerSock, peerSockFd](void *) {
-                                                try {
-                                                    if (!peerSock->attachEvent(peerSockFd)) {
-                                                        peerSock->emitErr(SocketException(Errcode::Err_eof, "Add event to poller failed when accept a socket."));
-                                                    }
-                                                } catch (std::exception &e) {
-                                                    ErrorL << "Exception occurred: " << e.what();
-                                                }
-                                            });
+            std::shared_ptr<void> completed(nullptr, [peerSock, peerSockFd](void *) {
+                try {
+                    if (!peerSock->attachEvent(peerSockFd)) {
+                        peerSock->emitErr(SocketException(Errcode::Err_eof, "Add event to poller failed when accept a socket."));
+                    }
+                } catch (std::exception &e) {
+                    ErrorL << "Exception occurred: " << e.what();
+                }
+            });
 
             try {
                 std::lock_guard<MutexWrapper> lck(_mtxEvent);
@@ -372,16 +355,16 @@ bool Socket::listen(const SocketFD::Ptr &sock) {
     std::weak_ptr<Socket> weakThis = shared_from_this();
     _enableRecv = true;
 
-    if (-1 ==
-        _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Error,
-                          [weakThis, weakSock](int event) {
-                              auto sharedThis = weakThis.lock();
-                              auto sharedSock = weakSock.lock();
-                              if (sharedThis && sharedSock) sharedThis->onAccept(sharedSock, event);
-                          })) return false;
+    if (-1 == _poller->addEvent(sock->getFd(), EventPoller::Event_Read | EventPoller::Event_Error, [weakThis, weakSock](int event) {
+            auto sharedThis = weakThis.lock();
+            auto sharedSock = weakSock.lock();
+            if (sharedThis && sharedSock) sharedThis->onAccept(sharedSock, event);
+        }))
+        return false;
 
     std::lock_guard<MutexWrapper> lck(_mtxSocketFd);
-    _socketFd = std::move(sock);  // 要不要右值？原代码没有-----------注意shared_ptr的右值构造函数。这个地方sock是const的，有没有move没关系，否则sock会被swap析构
+    _socketFd = std::move(
+        sock);  // 要不要右值？原代码没有-----------注意shared_ptr的右值构造函数。这个地方sock是const的，有没有move没关系，否则sock会被swap析构
     return true;
 }
 
@@ -459,14 +442,13 @@ bool Socket::emitErr(const SocketException &err) noexcept {
     closeSocket();
 
     std::weak_ptr<Socket> weakThis = shared_from_this();
-    _poller->async(
-        [weakThis, err]() {
-            auto sharedThis = weakThis.lock();
-            if (!sharedThis) return;
+    _poller->async([weakThis, err]() {
+        auto sharedThis = weakThis.lock();
+        if (!sharedThis) return;
 
-            std::lock_guard<MutexWrapper> lck(sharedThis->_mtxEvent);
-            sharedThis->_onErrCB(err);  // 异常处理？
-        });
+        std::lock_guard<MutexWrapper> lck(sharedThis->_mtxEvent);
+        sharedThis->_onErrCB(err);  // 异常处理？
+    });
     return true;
 }
 
@@ -474,8 +456,7 @@ void Socket::enableRecv(bool enabled) {
     if (_enableRecv == enabled) return;
     _enableRecv = enabled;
     _poller->modifyEvent(getFd(),
-                         (_enableRecv ? EventPoller::Event_Read : 0) |
-                             (_sendable ? 0 : EventPoller::Event_Write) |  // 可发送时不可写
+                         (_enableRecv ? EventPoller::Event_Read : 0) | (_sendable ? 0 : EventPoller::Event_Write) |  // 可发送时不可写
                              EventPoller::Event_Error);
 };
 
@@ -498,7 +479,9 @@ SocketType Socket::getType() const {
     if (!_socketFd) return SocketType::Socket_Invalid;
     return _socketFd->getType();
 };
-const EventPoller::Ptr &Socket::getPoller() const { return _poller; };
+const EventPoller::Ptr &Socket::getPoller() const {
+    return _poller;
+};
 
 bool Socket::cloneFromListenSocket(const Socket &socket) {
     auto sock = cloneSocketFd(socket);
@@ -531,15 +514,16 @@ bool Socket::bindPeerAddr(const sockaddr *addr, socklen_t addrLen) {
     if (!_socketFd) return false;
     if (_socketFd->getType() != SocketType::Socket_UDP) return false;
 
-    if (-1 ==
-        ::connect(_socketFd->getFd(), addr, addrLen ? addrLen : SocketUtil::getSockLen(addr))) {
+    if (-1 == ::connect(_socketFd->getFd(), addr, addrLen ? addrLen : SocketUtil::getSockLen(addr))) {
         // 错误信息输出
         return false;
     }
     return true;
 };
 
-void Socket::setSendFlag(int flags) { _sockFlags = flags; };
+void Socket::setSendFlag(int flags) {
+    _sockFlags = flags;
+};
 size_t Socket::getSendBufferCount() const {
     size_t ret = 0;
     {
@@ -553,7 +537,9 @@ size_t Socket::getSendBufferCount() const {
 
     return ret;
 };
-uint64_t Socket::elapsedTimeAfterFlushed() const { return _sendFlushTicker.elapsedTime(); };
+uint64_t Socket::elapsedTimeAfterFlushed() const {
+    return _sendFlushTicker.elapsedTime();
+};
 
 int Socket::getRecvSpeed() {
     _enableSpeed = true;
@@ -639,14 +625,12 @@ void Socket::onFlush() {
 
 void Socket::startWriteableEvent(const SocketFD::Ptr &sock) {
     _sendable = false;
-    _poller->modifyEvent(sock->getFd(),
-                         (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Write | EventPoller::Event_Error);
+    _poller->modifyEvent(sock->getFd(), (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Write | EventPoller::Event_Error);
 };
 
 void Socket::stopWriteableEvent(const SocketFD::Ptr &sock) {
     _sendable = true;
-    _poller->modifyEvent(sock->getFd(),
-                         (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Error);
+    _poller->modifyEvent(sock->getFd(), (_enableRecv ? EventPoller::Event_Read : 0) | EventPoller::Event_Error);
 };
 bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
     std::list<BufferList::Ptr> sendBufSending;
@@ -688,8 +672,7 @@ bool Socket::flushData(const SocketFD::Ptr &sock, bool pollerThread) {
         }
     }
     while (!sendBufSending.empty()) {
-        auto n = sendBufSending.front()
-                     ->send(sock->getFd(), _sockFlags);
+        auto n = sendBufSending.front()->send(sock->getFd(), _sockFlags);
         if (n > 0) {
             if (sendBufSending.front()->empty()) {
                 sendBufSending.pop_front();

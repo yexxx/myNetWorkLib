@@ -28,16 +28,14 @@ using namespace myNet;
 // 2023-03-19 20:03:27.262 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main | 每秒执行任务数:1560831
 // 2023-03-19 20:03:28.262 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main | 每秒执行任务数:1563999
 // 2023-03-19 20:03:29.263 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main | 每秒执行任务数:1567136
-// 2023-03-19 20:03:29.708 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:50 operator() | 执行1000万任务总共耗时:6447ms
-// 2023-03-19 20:03:30.263 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main | 每秒执行任务数:686906
-// 2023-03-19 20:03:31.263 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main | 每秒执行任务数:0
-// 2023-03-19 20:03:31.263 I [test_threadPoolBenckmark] [5870-test_threadPool] logger.cpp:86 ~Logger |
+// 2023-03-19 20:03:29.708 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:50 operator() |
+// 执行1000万任务总共耗时:6447ms 2023-03-19 20:03:30.263 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main |
+// 每秒执行任务数:686906 2023-03-19 20:03:31.263 I [test_threadPoolBenckmark] [5870-test_threadPool] test_threadPoolBenckmark.cpp:62 main |
+// 每秒执行任务数:0 2023-03-19 20:03:31.263 I [test_threadPoolBenckmark] [5870-test_threadPool] logger.cpp:86 ~Logger |
 
 int main() {
-    signal(SIGINT, [](int) {
-        exit(0);
-    });
-    //初始化日志系统
+    signal(SIGINT, [](int) { exit(0); });
+    // 初始化日志系统
     toolkit::Logger::Instance().add(std::make_shared<toolkit::ConsoleChannel>());
 
     atomic_llong count(0);
@@ -54,7 +52,7 @@ int main() {
     InfoL << "1000万任务入队耗时:" << ticker.elapsedTime() << "ms" << endl;
     uint64_t lastCount = 0, nowCount = 1;
     ticker.resetTime();
-    //此处才开始启动线程
+    // 此处才开始启动线程
     pool.start();
     while (true) {
         sleep(1);

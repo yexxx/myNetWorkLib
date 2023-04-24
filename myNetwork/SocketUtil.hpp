@@ -40,7 +40,8 @@ public:
     static int dissolveUdpSocket(int sockfd);
 
     // dns 解析
-    static bool getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family = AF_INET, int socketType = SOCK_STREAM, int protocol = IPPROTO_TCP, int expireSec = 60);
+    static bool getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family = AF_INET, int socketType = SOCK_STREAM,
+                            int protocol = IPPROTO_TCP, int expireSec = 60);
 
     // 获取socket 当前发生的错误
     static int getSocketError(int fd);
@@ -133,7 +134,8 @@ public:
     // interval: 探测时间间隔
     // keepAliveTime: 空闲时间
     // times: 探测次数
-    static int setKeepAlive(int fd, bool on = true, int interval = TCP_KEEPALIVE_INTERVAL, int keepAliveTime = TCP_KEEPALIVE_TIME, int times = TCP_KEEPALIVE_PROBE_TIMES);
+    static int setKeepAlive(int fd, bool on = true, int interval = TCP_KEEPALIVE_INTERVAL, int keepAliveTime = TCP_KEEPALIVE_TIME,
+                            int times = TCP_KEEPALIVE_PROBE_TIMES);
 
     // FD_CLOEXEC 特性 (在执行exec 时，是否关闭fd)
     // 没看懂具体是怎么实现的
@@ -186,7 +188,8 @@ public:
         return instance;
     }
 
-    bool getDomainIP(const char* host, sockaddr_storage& storage, int family = AF_INET, int sockType = SOCK_STREAM, int protocol = IPPROTO_TCP, int expireSec = 60);
+    bool getDomainIP(const char* host, sockaddr_storage& storage, int family = AF_INET, int sockType = SOCK_STREAM, int protocol = IPPROTO_TCP,
+                     int expireSec = 60);
 
 private:
     // 这个地方用shared_ptr 没看懂为什么

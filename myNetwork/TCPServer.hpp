@@ -61,14 +61,12 @@ inline void TCPServer::start(uint16_t port, const std::string& host, uint32_t ba
     }
 
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
-    _timer = std::make_shared<Timer>(
-        2.0f, _poller,
-        [weakThis]() -> bool {
-            auto strongThis = weakThis.lock();
-            if (!strongThis) return false;
-            strongThis->onManagerSession();
-            return true;
-        });
+    _timer = std::make_shared<Timer>(2.0f, _poller, [weakThis]() -> bool {
+        auto strongThis = weakThis.lock();
+        if (!strongThis) return false;
+        strongThis->onManagerSession();
+        return true;
+    });
 
     EventPollerPool::Instance().for_each([&](const TaskExecutor::Ptr& excutor) {
         EventPoller::Ptr poller = std::dynamic_pointer_cast<EventPoller>(excutor);

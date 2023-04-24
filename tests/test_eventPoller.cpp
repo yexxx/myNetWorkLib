@@ -17,7 +17,7 @@ using namespace myNet;
 int main() {
     static bool exit_flag = false;
     signal(SIGINT, [](int) { exit_flag = true; });
-    //设置日志
+    // 设置日志
     toolkit::Logger::Instance().add(std::make_shared<toolkit::ConsoleChannel>());
 
     toolkit::Ticker ticker;
@@ -42,7 +42,7 @@ int main() {
 
         EventPollerPool::Instance().getExecutor()->async([]() {
             auto usec = rand() % 4000;
-            //DebugL << usec;
+            // DebugL << usec;
             usleep(usec);
         });
 

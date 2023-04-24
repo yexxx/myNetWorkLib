@@ -63,6 +63,6 @@ private:
     ThreadGroup &operator=(ThreadGroup &&that) = delete;
 };
 
-}  //namespace myNet
+}  // namespace myNet
 
 #endif  // ThreadGroup_hpp

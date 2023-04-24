@@ -12,13 +12,7 @@ namespace myNet {
 
 class ThreadPool : public TaskExecutor {
 public:
-    enum Priority {
-        PRIORITY_LOWEST = 0,
-        PRIORITY_LOW,
-        PRIORITY_NORMAL,
-        PRIORITY_HIGH,
-        PRIORITY_HIGHEST
-    };
+    enum Priority { PRIORITY_LOWEST = 0, PRIORITY_LOW, PRIORITY_NORMAL, PRIORITY_HIGH, PRIORITY_HIGHEST };
 
     ThreadPool(int num = 1, Priority priority = PRIORITY_HIGH, bool autoStart = true) {
         _threadNum = num;

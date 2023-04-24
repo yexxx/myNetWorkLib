@@ -67,9 +67,8 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
     _sessionBuilder = [](const UDPServer::Ptr& server, const Socket::Ptr sock) {
         auto session = std::make_shared<SessionType>(sock);
         auto tmpOnCreateSocketCB = server->_onCreateSocketCB;
-        session->setOnCreateSocket([tmpOnCreateSocketCB](const EventPoller::Ptr& poller) {
-            return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0);
-        });
+        session->setOnCreateSocket(
+            [tmpOnCreateSocketCB](const EventPoller::Ptr& poller) { return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0); });
         std::weak_ptr<Server> tserver = server;
         return std::make_shared<SessionHelper>(server, session);
     };
@@ -84,32 +83,29 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
 
     // 父类的enable_shared_from_this, 子类用要强制转换
     std::weak_ptr<UDPServer> weakThis = std::dynamic_pointer_cast<UDPServer>(shared_from_this());
-    _timer = std::make_shared<Timer>(
-        2.0f, _poller,
-        [weakThis]() -> bool {
-            auto strong_self = weakThis.lock();
-            if (!strong_self) {
-                return false;
-            }
-            strong_self->onManageSession();
-            return true;
-        });
+    _timer = std::make_shared<Timer>(2.0f, _poller, [weakThis]() -> bool {
+        auto strong_self = weakThis.lock();
+        if (!strong_self) {
+            return false;
+        }
+        strong_self->onManageSession();
+        return true;
+    });
 
-    //clone server至不同线程，让udp server支持多线程
-    EventPollerPool::Instance().for_each(
-        [&](const TaskExecutor::Ptr& executor) {
-            auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
-            if (poller == _poller || !poller) {
-                return;
-            }
-            auto& serverRef = _clonedServer[poller.get()];
-            if (!serverRef) {
-                serverRef = std::make_shared<UDPServer>(poller);
-            }
-            if (serverRef) {
-                serverRef->cloneFrom(*this);
-            }
-        });
+    // clone server至不同线程，让udp server支持多线程
+    EventPollerPool::Instance().for_each([&](const TaskExecutor::Ptr& executor) {
+        auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
+        if (poller == _poller || !poller) {
+            return;
+        }
+        auto& serverRef = _clonedServer[poller.get()];
+        if (!serverRef) {
+            serverRef = std::make_shared<UDPServer>(poller);
+        }
+        if (serverRef) {
+            serverRef->cloneFrom(*this);
+        }
+    });
 
     InfoL << "UDP server bind to [" << host << "]: " << port;
 };

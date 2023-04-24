@@ -1,23 +1,23 @@
 /* Copyright Joyent, Inc. and other Node contributors. All rights reserved.
-*  Copyright (c) 2016-2019 xiongziliang <771730766@qq.com>
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to
-* deal in the Software without restriction, including without limitation the
-* rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-* sell copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in
-* all copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-* FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-* IN THE SOFTWARE.
-*/
+ *  Copyright (c) 2016-2019 xiongziliang <771730766@qq.com>
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
 
 #ifndef UV_ERRNO_H_
 #define UV_ERRNO_H_
@@ -43,8 +43,8 @@
 #define UV__EAI_PROTOCOL (-3014)
 
 /* Only map to the system errno on non-Windows platforms. It's apparently
-* a fairly common practice for Windows programmers to redefine errno codes.
-*/
+ * a fairly common practice for Windows programmers to redefine errno codes.
+ */
 #if defined(E2BIG) && !defined(_WIN32)
 #define UV__E2BIG (-E2BIG)
 #else
@@ -400,16 +400,12 @@
 #endif
 
 /* EHOSTDOWN is not visible on BSD-like systems when _POSIX_C_SOURCE is
-* defined. Fortunately, its value is always 64 so it's possible albeit
-* icky to hard-code it.
-*/
+ * defined. Fortunately, its value is always 64 so it's possible albeit
+ * icky to hard-code it.
+ */
 #if defined(EHOSTDOWN) && !defined(_WIN32)
 #define UV__EHOSTDOWN (-EHOSTDOWN)
-#elif defined(__APPLE__) ||        \
-    defined(__DragonFly__) ||      \
-    defined(__FreeBSD__) ||        \
-    defined(__FreeBSD_kernel__) || \
-    defined(__NetBSD__) ||         \
+#elif defined(__APPLE__) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || \
     defined(__OpenBSD__)
 #define UV__EHOSTDOWN (-64)
 #else

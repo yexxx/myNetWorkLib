@@ -8,8 +8,8 @@
 using namespace std;
 using namespace myNet;
 /**
-* 回显会话
-*/
+ * 回显会话
+ */
 class tEchoSession : public toolkit::Session {
 public:
     tEchoSession(const toolkit::Socket::Ptr &pSock) : toolkit::Session(pSock) {
@@ -23,9 +23,7 @@ public:
         WarnL << buffer->toString();
         send(buffer);
     }
-    void onError(const toolkit::SockException &err) override {
-        WarnL << err.what();
-    }
+    void onError(const toolkit::SockException &err) override { WarnL << err.what(); }
 
     void onManager() override {}
 };
@@ -43,19 +41,17 @@ public:
         WarnL << buffer->toString();
         send(buffer);
     }
-    void onErr(const SocketException &err) override {
-        WarnL << err.what();
-    }
+    void onErr(const SocketException &err) override { WarnL << err.what(); }
 
     void onManager() override {}
 };
 
-//赋值struct sockaddr
+// 赋值struct sockaddr
 void makeAddr(struct sockaddr_storage *out, const char *ip, uint16_t port) {
     *out = SocketUtil::makeSockaddr(ip, port);
 }
 
-//获取struct sockaddr的IP字符串
+// 获取struct sockaddr的IP字符串
 string getIP(struct sockaddr *addr) {
     return SocketUtil::inetNtoa(addr);
 }
@@ -65,7 +61,7 @@ uint16_t getPort(struct sockaddr *addr) {
 }
 
 int main() {
-    //初始化环境
+    // 初始化环境
     toolkit::Logger::Instance().add(std::shared_ptr<toolkit::ConsoleChannel>(new toolkit::ConsoleChannel()));
     toolkit::Logger::Instance().setWriter(std::shared_ptr<toolkit::LogWriter>(new toolkit::AsyncLogWriter()));
 
@@ -89,10 +85,10 @@ int main() {
     Socket::Ptr udpsock = Socket::createSocket();
     udpsock->bindUdpSocket(0, "0.0.0.0");
     struct sockaddr_storage addrDst;
-    makeAddr(&addrDst, "127.0.0.1", 9001);  //UDP数据发送地址
+    makeAddr(&addrDst, "127.0.0.1", 9001);  // UDP数据发送地址
     udpsock->bindPeerAddr((sockaddr *)&addrDst);
     udpsock->setOnRead([](const Buffer::Ptr &buf, struct sockaddr *addr, int) {
-        //接收到数据回调
+        // 接收到数据回调
         DebugL << "recv data form " << getIP(addr) << ":" << getPort(addr) << " :" << buf->data();
     });
     unsigned long long i = 0;

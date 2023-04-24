@@ -51,8 +51,7 @@ int SocketUtil::connect(const char* host, uint16_t port, bool async, const char*
 int SocketUtil::listen(const uint16_t port, const char* localIp, int backLog) {
     int sockfd = -1;
     int family = supportIpv6() ? (isIpv4(localIp) ? AF_INET : AF_INET6) : AF_INET6;
-    if (-1 ==
-        (sockfd = socket(family, SOCK_STREAM, IPPROTO_TCP))) {
+    if (-1 == (sockfd = socket(family, SOCK_STREAM, IPPROTO_TCP))) {
         WarnL << "Create socket failed" << uv_strerror(uv_translate_posix_error(errno));
         return -1;
     }
@@ -78,8 +77,7 @@ int SocketUtil::listen(const uint16_t port, const char* localIp, int backLog) {
 int SocketUtil::bindUdpSocket(const uint16_t port, const char* localIp, bool enableReuse) {
     int sockfd = -1;
     int family = supportIpv6() ? (isIpv4(localIp) ? AF_INET : AF_INET6) : AF_INET;
-    if (-1 ==
-        (sockfd = socket(family, SOCK_DGRAM, IPPROTO_UDP))) {
+    if (-1 == (sockfd = socket(family, SOCK_DGRAM, IPPROTO_UDP))) {
         WarnL << "Create socket failed" << uv_strerror(uv_translate_posix_error(errno));
         return -1;
     }
@@ -264,10 +262,10 @@ std::string SocketUtil::inetNtoa(const sockaddr* addr) {
 
 uint16_t SocketUtil::inetPort(const sockaddr* addr) {
     switch (addr->sa_family) {
-        // ntohs：网络字节序转换成主机字节序（涉及大小端转换）
-        case AF_INET: return ntohs(((sockaddr_in*)addr)->sin_port);
-        case AF_INET6: return ntohs(((sockaddr_in6*)addr)->sin6_port);
-        default: assert(0); return 0;
+    // ntohs：网络字节序转换成主机字节序（涉及大小端转换）
+    case AF_INET: return ntohs(((sockaddr_in*)addr)->sin_port);
+    case AF_INET6: return ntohs(((sockaddr_in6*)addr)->sin6_port);
+    default: assert(0); return 0;
     }
 }
 
@@ -506,9 +504,9 @@ int SocketUtil::setCloseWait(int sockfd, int second) {
 
 int SocketUtil::bindSock(int sockfd, const char* NICIp, uint16_t port, int family) {
     switch (family) {
-        case AF_INET: return bindSock4(sockfd, NICIp, port);
-        case AF_INET6: return bindSock6(sockfd, NICIp, port);
-        default: assert(0); return -1;
+    case AF_INET: return bindSock4(sockfd, NICIp, port);
+    case AF_INET6: return bindSock6(sockfd, NICIp, port);
+    default: assert(0); return -1;
     }
 }
 

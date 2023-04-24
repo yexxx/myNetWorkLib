@@ -8,8 +8,7 @@
 
 namespace myNet {
 
-BufferString::BufferString(std::string data, size_t offset, size_t len)
-    : _data(std::move(data)) {
+BufferString::BufferString(std::string data, size_t offset, size_t len) : _data(std::move(data)) {
     assert(offset + len <= _data.size());
     if (!len) len = _data.size() - offset;
     _size = len;
@@ -68,7 +67,9 @@ void BufferCallback::sendCompleted(bool flag) {
 }
 
 void BufferCallback::sendFrontSuccess() {
-    if (_sendResultCB) { _sendResultCB(_bufList.front(), true); }
+    if (_sendResultCB) {
+        _sendResultCB(_bufList.front(), true);
+    }
     _bufList.pop_front();
 }
 

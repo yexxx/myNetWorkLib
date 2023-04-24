@@ -11,32 +11,30 @@ static const uint8_t s_in6_addr_maped[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0
 static std::string makeSockId(sockaddr* addr, int) {
     std::string ret;
     switch (addr->sa_family) {
-        case AF_INET: {
-            ret.resize(18);
-            ret[0] = ((sockaddr_in*)addr)->sin_port >> 8;
-            ret[1] = ((sockaddr_in*)addr)->sin_port & 0xFF;
-            //ipv4地址统一转换为ipv6方式处理
-            memcpy(&ret[2], &s_in6_addr_maped, 12);
-            memcpy(&ret[14], &(((sockaddr_in*)addr)->sin_addr), 4);
-            return ret;
-        }
-        case AF_INET6: {
-            ret.resize(18);
-            ret[0] = ((sockaddr_in6*)addr)->sin6_port >> 8;
-            ret[1] = ((sockaddr_in6*)addr)->sin6_port & 0xFF;
-            memcpy(&ret[2], &(((sockaddr_in6*)addr)->sin6_addr), 16);
-            return ret;
-        }
-        default: assert(0); return "";
+    case AF_INET: {
+        ret.resize(18);
+        ret[0] = ((sockaddr_in*)addr)->sin_port >> 8;
+        ret[1] = ((sockaddr_in*)addr)->sin_port & 0xFF;
+        // ipv4地址统一转换为ipv6方式处理
+        memcpy(&ret[2], &s_in6_addr_maped, 12);
+        memcpy(&ret[14], &(((sockaddr_in*)addr)->sin_addr), 4);
+        return ret;
+    }
+    case AF_INET6: {
+        ret.resize(18);
+        ret[0] = ((sockaddr_in6*)addr)->sin6_port >> 8;
+        ret[1] = ((sockaddr_in6*)addr)->sin6_port & 0xFF;
+        memcpy(&ret[2], &(((sockaddr_in6*)addr)->sin6_addr), 16);
+        return ret;
+    }
+    default: assert(0); return "";
     }
 }
 namespace myNet {
 UDPServer::UDPServer(const EventPoller::Ptr& poller) : Server(poller) {
     setOnCreateSocket(nullptr);
     _socket = createSocket(_poller);
-    _socket->setOnRead([this](const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
-        onRead(buf, addr, addrLen);
-    });
+    _socket->setOnRead([this](const Buffer::Ptr& buf, sockaddr* addr, int addrLen) { onRead(buf, addr, addrLen); });
 }
 
 UDPServer::~UDPServer() {
@@ -56,7 +54,9 @@ void UDPServer::setOnCreateSocket(onCreateSocketCB cb) {
     if (cb) {
         _onCreateSocketCB = cb;
     } else {
-        _onCreateSocketCB = [](const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) { return Socket::createSocket(poller, false); };
+        _onCreateSocketCB = [](const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) {
+            return Socket::createSocket(poller, false);
+        };
     }
     // 设置克隆服务器创建socket的方式
     if (!_cloned) {
@@ -89,26 +89,24 @@ void UDPServer::onManageSession() {
         tmpSessionMap = _sessionMap;
     }
 
-    EventPollerPool::Instance().for_each(
-        [tmpSessionMap](const TaskExecutor::Ptr& executor) {
-            auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
-            if (!poller) return;
-            poller->async(
-                [tmpSessionMap]() {
-                    for (auto& [_, sessionHelperPtr] : *tmpSessionMap) {
-                        // auto& ?
-                        auto session = sessionHelperPtr->getSession();
-                        if (!session->getPoller()->isCurrentThread()) {
-                            continue;
-                        }
-                        try {
-                            session->onManager();
-                        } catch (std::exception& e) {
-                            WarnL << "Exception occurred when emit onManager: " << e.what();
-                        }
-                    }
-                });
+    EventPollerPool::Instance().for_each([tmpSessionMap](const TaskExecutor::Ptr& executor) {
+        auto poller = std::dynamic_pointer_cast<EventPoller>(executor);
+        if (!poller) return;
+        poller->async([tmpSessionMap]() {
+            for (auto& [_, sessionHelperPtr] : *tmpSessionMap) {
+                // auto& ?
+                auto session = sessionHelperPtr->getSession();
+                if (!session->getPoller()->isCurrentThread()) {
+                    continue;
+                }
+                try {
+                    session->onManager();
+                } catch (std::exception& e) {
+                    WarnL << "Exception occurred when emit onManager: " << e.what();
+                }
+            }
         });
+    });
 }
 
 void UDPServer::onRead(const Buffer::Ptr& buf, sockaddr* addr, int addrLen, bool isServerFd) {
@@ -169,8 +167,7 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
     }
     std::weak_ptr<UDPServer> weakThis = std::dynamic_pointer_cast<UDPServer>(shared_from_this());
 
-    auto sessionCreater =
-        [this, weakThis, socket, addr, addrLen, id]() -> Session::Ptr {
+    auto sessionCreater = [this, weakThis, socket, addr, addrLen, id]() -> Session::Ptr {
         auto server = weakThis.lock();
         if (!server) return static_cast<Session::Ptr>(nullptr);
 
@@ -190,46 +187,42 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
 
         std::weak_ptr<Session> weakSession = session;
         // 处理本次会话数据
-        socket->setOnRead(
-            [weakSession, weakThis, id](const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
-                auto sharedThis = weakThis.lock();
-                if (!sharedThis) return;
+        socket->setOnRead([weakSession, weakThis, id](const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
+            auto sharedThis = weakThis.lock();
+            if (!sharedThis) return;
 
-                // 若是本会话的数据，直接处理
-                if (id == makeSockId(addr, addrLen)) {
-                    if (auto sharedSession = weakSession.lock()) {
-                        emitSessionRecv(sharedSession, buf);
-                    }
-                    return;
+            // 若是本会话的数据，直接处理
+            if (id == makeSockId(addr, addrLen)) {
+                if (auto sharedSession = weakSession.lock()) {
+                    emitSessionRecv(sharedSession, buf);
                 }
+                return;
+            }
 
-                // 否则分配合适对象处理
-                sharedThis->onRead(buf, addr, addrLen, false);
-            });
+            // 否则分配合适对象处理
+            sharedThis->onRead(buf, addr, addrLen, false);
+        });
 
         // 处理本次会话生命周期
         // 这个地方析构顺序可能有问题
-        socket->setOnErr(
-            [weakThis, weakSession, id](const SocketException& err) {
-                std::shared_ptr<void> deleter(
-                    nullptr,
-                    [weakThis, id](void*) {
-                        auto sharedThis = weakThis.lock();
-                        if (!sharedThis) {
-                            return;
-                        }
-
-                        std::lock_guard<std::recursive_mutex> lck(*sharedThis->_sessionMtx);
-                        sharedThis->_sessionMap->erase(id);
-                    });
-                auto sharedSession = weakSession.lock();
-
-                if (!sharedSession) {
+        socket->setOnErr([weakThis, weakSession, id](const SocketException& err) {
+            std::shared_ptr<void> deleter(nullptr, [weakThis, id](void*) {
+                auto sharedThis = weakThis.lock();
+                if (!sharedThis) {
                     return;
                 }
 
-                sharedSession->onErr(err);
+                std::lock_guard<std::recursive_mutex> lck(*sharedThis->_sessionMtx);
+                sharedThis->_sessionMap->erase(id);
             });
+            auto sharedSession = weakSession.lock();
+
+            if (!sharedSession) {
+                return;
+            }
+
+            sharedSession->onErr(err);
+        });
 
         auto iter = _sessionMap->emplace(id, std::move(helper));
         assert(iter.second);

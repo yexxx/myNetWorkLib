@@ -113,17 +113,11 @@ TaskExecutor::Ptr TaskExecutorGetter::getExecutor() {
 void TaskExecutorGetter::getExecutorDelay(const std::function<void(const std::vector<int>&)>& callback) {
     auto delayVec = std::make_shared<std::vector<int>>(_threads.size());
     // deleter 拥有delayVec，所以deleter 一定先析构
-    std::shared_ptr<void> deleter(nullptr, [delayVec, callback](void*) {
-        callback(*delayVec);
-    });
+    std::shared_ptr<void> deleter(nullptr, [delayVec, callback](void*) { callback(*delayVec); });
     for (auto i = 0; i < _threads.size(); ++i) {
         std::shared_ptr<toolkit::Ticker> ticker = std::make_shared<toolkit::Ticker>();
         // 这里捕获deleter 防止其提前析构
-        _threads[i]->async(
-            [deleter, delayVec, i, ticker]() {
-                (*delayVec)[i] = static_cast<int>(ticker->elapsedTime());
-            },
-            false);
+        _threads[i]->async([deleter, delayVec, i, ticker]() { (*delayVec)[i] = static_cast<int>(ticker->elapsedTime()); }, false);
     }
 }
 

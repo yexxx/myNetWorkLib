@@ -50,7 +50,9 @@ public:
     static Ptr create() { return std::make_shared<BufferRaw>(); };
 
     ~BufferRaw() override {
-        if (_data) { delete[] _data; }
+        if (_data) {
+            delete[] _data;
+        }
     }
 
     char* data() const override { return _data; }

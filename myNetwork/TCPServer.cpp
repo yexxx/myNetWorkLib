@@ -5,21 +5,16 @@ TCPServer::TCPServer(const EventPoller::Ptr& poller) : Server(poller) {
     setOnCreateSocket(nullptr);
     _socket = _onCreateSocket(poller);
     // accept 之前，创建socket
-    _socket->setOnCreateSocket(
-        [this](const EventPoller::Ptr& poller) {
-            // 这个地方会报错，先注释掉
-            assert(_poller->isCurrentThread());
-            return _onCreateSocket(EventPollerPool::Instance().getPoller(false));
-        });
-    _socket->setOnAccept(
-        [this](Socket::Ptr& sock, std::shared_ptr<void>& complete) {
-            auto sockPoller = sock->getPoller().get();
-            auto server = getServer(sockPoller);
-            sockPoller->async(
-                [server, sock, complete]() {
-                    server->onAcceptConnection(sock);
-                });
-        });
+    _socket->setOnCreateSocket([this](const EventPoller::Ptr& poller) {
+        // 这个地方会报错，先注释掉
+        assert(_poller->isCurrentThread());
+        return _onCreateSocket(EventPollerPool::Instance().getPoller(false));
+    });
+    _socket->setOnAccept([this](Socket::Ptr& sock, std::shared_ptr<void>& complete) {
+        auto sockPoller = sock->getPoller().get();
+        auto server = getServer(sockPoller);
+        sockPoller->async([server, sock, complete]() { server->onAcceptConnection(sock); });
+    });
 }
 
 TCPServer::~TCPServer() {
@@ -54,16 +49,14 @@ void TCPServer::cloneFrom(const TCPServer& that) {
     _socket->cloneFromListenSocket(*(that._socket));
 
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
-    _timer = std::make_shared<Timer>(
-        2.0f, _poller,
-        [weakThis]() -> bool {
-            auto strongThis = weakThis.lock();
-            if (!strongThis) {
-                return false;
-            }
-            strongThis->onManagerSession();
-            return true;
-        });
+    _timer = std::make_shared<Timer>(2.0f, _poller, [weakThis]() -> bool {
+        auto strongThis = weakThis.lock();
+        if (!strongThis) {
+            return false;
+        }
+        strongThis->onManagerSession();
+        return true;
+    });
 
     _parent = &that;
 }
@@ -71,6 +64,7 @@ void TCPServer::cloneFrom(const TCPServer& that) {
 Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
     // 这儿之前会出问题，不知道为什么，暂时未复现
     // 已复现，暂时注释掉以解决
+    // 已解决
     assert(_poller->isCurrentThread());
     std::weak_ptr<TCPServer> weakThis = std::dynamic_pointer_cast<TCPServer>(shared_from_this());
 
@@ -82,54 +76,50 @@ Session::Ptr TCPServer::onAcceptConnection(const Socket::Ptr& sock) {
 
     std::weak_ptr<Session> weakSession = session;
 
-    sock->setOnRead(
-        [weakSession](const Buffer::Ptr& buf, sockaddr* addr, int) {
-            auto strongSession = weakSession.lock();
-            if (!strongSession) {
-                return;
-            }
-            try {
-                strongSession->onRecv(buf);
-            } catch (SocketException& e) {
-                strongSession->shutdown(e);
-            } catch (std::exception& e) {
-                strongSession->shutdown(SocketException(Errcode::Err_shutdown, e.what()));
-            }
-        });
+    sock->setOnRead([weakSession](const Buffer::Ptr& buf, sockaddr* addr, int) {
+        auto strongSession = weakSession.lock();
+        if (!strongSession) {
+            return;
+        }
+        try {
+            strongSession->onRecv(buf);
+        } catch (SocketException& e) {
+            strongSession->shutdown(e);
+        } catch (std::exception& e) {
+            strongSession->shutdown(SocketException(Errcode::Err_shutdown, e.what()));
+        }
+    });
 
     SessionHelper* helperPtr = sessionHelper.get();
-    sock->setOnErr(
-        [weakThis, weakSession, helperPtr](const SocketException& err) {
-            // 出该作用域时从sessionMap 中删除session
-            std::shared_ptr<void> deleter(
-                nullptr,
-                [weakThis, helperPtr](void*) {
-                    auto strongThis = weakThis.lock();
-                    if (!strongThis) {
-                        return;
-                    }
-                    assert(strongThis->_poller->isCurrentThread());
-                    // 管理时需在map 中遍历，不能直接删除
-                    if (strongThis->_isOnManager) {
+    sock->setOnErr([weakThis, weakSession, helperPtr](const SocketException& err) {
+        // 出该作用域时从sessionMap 中删除session
+        std::shared_ptr<void> deleter(nullptr, [weakThis, helperPtr](void*) {
+            auto strongThis = weakThis.lock();
+            if (!strongThis) {
+                return;
+            }
+            assert(strongThis->_poller->isCurrentThread());
+            // 管理时需在map 中遍历，不能直接删除
+            if (strongThis->_isOnManager) {
+                strongThis->_sessionMap.erase(helperPtr);
+            } else {
+                strongThis->_poller->async(
+                    [weakThis, helperPtr]() {
+                        auto strongThis = weakThis.lock();
+                        if (!strongThis) {
+                            return;
+                        }
                         strongThis->_sessionMap.erase(helperPtr);
-                    } else {
-                        strongThis->_poller->async(
-                            [weakThis, helperPtr]() {
-                                auto strongThis = weakThis.lock();
-                                if (!strongThis) {
-                                    return;
-                                }
-                                strongThis->_sessionMap.erase(helperPtr);
-                            },
-                            false);
-                    }
-                });
-
-            auto strongSession = weakSession.lock();
-            if (strongSession) {
-                strongSession->onErr(err);
+                    },
+                    false);
             }
         });
+
+        auto strongSession = weakSession.lock();
+        if (strongSession) {
+            strongSession->onErr(err);
+        }
+    });
 
     return session;
 }
