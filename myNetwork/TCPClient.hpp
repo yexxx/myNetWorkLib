@@ -26,7 +26,9 @@ class TCPClient : public std::enable_shared_from_this<TCPClient>, public SocketH
     // 连接是否有效
     virtual bool alive() const;
 
-    virtual void setNetAdapter(const std::string& localIp) { _netAdapter = localIp; }
+    virtual void setNetAdapter(const std::string& localIp) {
+        _netAdapter = localIp;
+    }
 
   protected:
     // 连接成功与否
@@ -43,7 +45,9 @@ class TCPClient : public std::enable_shared_from_this<TCPClient>, public SocketH
     // 数据全部发送完成
     virtual void onFlush() {}
 
-    virtual void onErr(const SocketException& e) { WarnL << e.what(); };
+    virtual void onErr(const SocketException& e) {
+        WarnL << e.what();
+    };
 
     // 自定义管理，每两秒执行一次
     virtual void onManager() {}

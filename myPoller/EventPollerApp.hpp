@@ -17,7 +17,9 @@ class PipeEventPoller {
 
     ~PipeEventPoller();
 
-    void send(const char* buf, int size = 0) { _pipe->write(buf, size); }
+    void send(const char* buf, int size = 0) {
+        _pipe->write(buf, size);
+    }
 
   private:
     std::shared_ptr<Pipe> _pipe;

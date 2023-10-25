@@ -21,7 +21,9 @@ class noncopyable {
 // 锁
 class MutexWrapper {
   public:
-    MutexWrapper(bool enable) { _enable = enable; }
+    MutexWrapper(bool enable) {
+        _enable = enable;
+    }
     ~MutexWrapper() = default;
 
     void lock() {

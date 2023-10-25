@@ -32,11 +32,17 @@ class SocketException : public std::exception {
         _msg = msg;
     };
 
-    const char* what() const noexcept override { return _msg.c_str(); };
+    const char* what() const noexcept override {
+        return _msg.c_str();
+    };
 
-    Errcode getErrcode() const { return _code; }
+    Errcode getErrcode() const {
+        return _code;
+    }
 
-    operator bool() const { return _code != Errcode::Err_sucess; }
+    operator bool() const {
+        return _code != Errcode::Err_sucess;
+    }
 
   private:
     Errcode _code;
@@ -63,8 +69,12 @@ class SocketNum {
         close(_fd);
     }
 
-    int getFd() const { return _fd; }
-    SocketType getType() const { return _type; }
+    int getFd() const {
+        return _fd;
+    }
+    SocketType getType() const {
+        return _type;
+    }
 
   private:
     int _fd;
@@ -93,8 +103,12 @@ class SocketFD : public noncopyable {
         _poller->delEvent(_num->getFd(), [](bool) {});
     }
 
-    int getFd() const { return _num->getFd(); }
-    SocketType getType() const { return _num->getType(); }
+    int getFd() const {
+        return _num->getFd();
+    }
+    SocketType getType() const {
+        return _num->getType();
+    }
 
   private:
     SocketNum::Ptr _num;
@@ -111,7 +125,9 @@ class SocketInfo {
     virtual uint16_t get_localPort() = 0;
     virtual std::string get_peerIP() = 0;
     virtual uint16_t get_peerPort() = 0;
-    virtual std::string getIdentifier() const { return ""; }
+    virtual std::string getIdentifier() const {
+        return "";
+    }
 };
 
 // socket对象

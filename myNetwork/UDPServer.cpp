@@ -247,6 +247,8 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
     return static_cast<Session::Ptr>(nullptr);
 }
 
-Socket::Ptr UDPServer::createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) { return _onCreateSocketCB(poller, buf, addr, addrLen); }
+Socket::Ptr UDPServer::createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
+    return _onCreateSocketCB(poller, buf, addr, addrLen);
+}
 
 } // namespace myNet

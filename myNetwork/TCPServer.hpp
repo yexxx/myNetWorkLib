@@ -22,7 +22,9 @@ class TCPServer : public Server {
         return _socket->get_localPort();
     };
 
-    Socket::Ptr getSocket() const { return _socket; }
+    Socket::Ptr getSocket() const {
+        return _socket;
+    }
 
     void setOnCreateSocket(Socket::onCreateSocketCB cb);
 

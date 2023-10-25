@@ -98,7 +98,9 @@ int SocketUtil::bindUdpSocket(const uint16_t port, const char* localIp, bool ena
 }
 
 // 原代码将addr.ss_family 设置为AF_UNSPEC, 使用::connect()实现，不知道原理，暂时不实现
-int SocketUtil::dissolveUdpSocket(int sockfd) { return -1; }
+int SocketUtil::dissolveUdpSocket(int sockfd) {
+    return -1;
+}
 
 bool SocketUtil::getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family, int socketType, int protocol, int expireSec) {
     int flag = DNSCache::Instance().getDomainIP(host, addr, family, socketType, protocol, expireSec);
@@ -606,8 +608,7 @@ std::shared_ptr<addrinfo> DNSCache::getCacheDomainIP(const char* host, int expir
 
 std::shared_ptr<addrinfo> DNSCache::getSystemDomainIP(const char* host) {
     addrinfo* ret = nullptr;
-    while (-1 == getaddrinfo(host, nullptr, nullptr, &ret) && UV_EINTR == uv_translate_posix_error(errno)) {
-    };
+    while (-1 == getaddrinfo(host, nullptr, nullptr, &ret) && UV_EINTR == uv_translate_posix_error(errno)) {};
     if (!ret) {
         WarnL << "getaddrinfo failed: " << host;
         return nullptr;

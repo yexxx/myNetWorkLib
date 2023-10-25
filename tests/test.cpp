@@ -27,8 +27,12 @@ class testClass : public enable_shared_from_this<testClass> {
   public:
     testClass(){};
 
-    int get() { return _num; }
-    void set(int num) { _num = num; }
+    int get() {
+        return _num;
+    }
+    void set(int num) {
+        _num = num;
+    }
 
   private:
     int _num{10};

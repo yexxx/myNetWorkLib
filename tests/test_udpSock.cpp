@@ -14,12 +14,18 @@ using namespace std;
 bool exitProgram = false;
 
 // 赋值struct sockaddr
-void makeAddr(struct sockaddr_storage* out, const char* ip, uint16_t port) { *out = myNet::SocketUtil::makeSockaddr(ip, port); }
+void makeAddr(struct sockaddr_storage* out, const char* ip, uint16_t port) {
+    *out = myNet::SocketUtil::makeSockaddr(ip, port);
+}
 
 // 获取struct sockaddr的IP字符串
-string getIP(struct sockaddr* addr) { return myNet::SocketUtil::inetNtoa(addr); }
+string getIP(struct sockaddr* addr) {
+    return myNet::SocketUtil::inetNtoa(addr);
+}
 
-uint16_t getPort(struct sockaddr* addr) { return myNet::SocketUtil::inetPort(addr); }
+uint16_t getPort(struct sockaddr* addr) {
+    return myNet::SocketUtil::inetPort(addr);
+}
 
 int main() {
     // 设置程序退出信号处理函数

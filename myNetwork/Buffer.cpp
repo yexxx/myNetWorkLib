@@ -137,5 +137,7 @@ void BufferSendMsg::reOffset(size_t n) {
     }
 }
 
-BufferList::Ptr BufferList::create(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB, bool isUdp) { return std::make_shared<BufferSendMsg>(std::move(bufList), std::move(sendResultCB)); }
+BufferList::Ptr BufferList::create(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB, bool isUdp) {
+    return std::make_shared<BufferSendMsg>(std::move(bufList), std::move(sendResultCB));
+}
 } // namespace myNet

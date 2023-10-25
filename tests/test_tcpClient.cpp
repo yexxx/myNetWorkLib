@@ -46,11 +46,9 @@ int main() {
     }
 
     string oneKByteSting;
-    for (auto i = 0; i < 1000; ++i)
-        oneKByteSting.push_back('-');
+    for (auto i = 0; i < 1000; ++i) oneKByteSting.push_back('-');
     string _1000KbytesString;
-    for (auto i = 0; i < 1000; ++i)
-        _1000KbytesString += oneKByteSting;
+    for (auto i = 0; i < 1000; ++i) _1000KbytesString += oneKByteSting;
     _1000KbytesString.push_back('\0');
     getchar();
 

@@ -128,9 +128,13 @@ EventPoller::DelayTask::Ptr EventPoller::doDelayTask(uint64_t delayMs, std::func
     return ret;
 }
 
-bool EventPoller::isCurrentThread() { return _loopThreadId == std::this_thread::get_id(); }
+bool EventPoller::isCurrentThread() {
+    return _loopThreadId == std::this_thread::get_id();
+}
 
-EventPoller::Ptr EventPoller::getCurrentPoller() { return currentPoller.lock(); }
+EventPoller::Ptr EventPoller::getCurrentPoller() {
+    return currentPoller.lock();
+}
 
 BufferRaw::Ptr EventPoller::getSharedBuffer() {
     auto ret = _sharedBuffer.lock();
@@ -142,9 +146,13 @@ BufferRaw::Ptr EventPoller::getSharedBuffer() {
     return ret;
 }
 
-const std::thread::id& EventPoller::getThreadId() const { return _loopThreadId; }
+const std::thread::id& EventPoller::getThreadId() const {
+    return _loopThreadId;
+}
 
-const std::string& EventPoller::getThreadName() const { return _loopThreadName; }
+const std::string& EventPoller::getThreadName() const {
+    return _loopThreadName;
+}
 
 EventPoller::EventPoller(std::string name, ThreadPool::Priority priority) {
     _loopThreadName = name;
@@ -241,8 +249,7 @@ void EventPoller::shutdown() {
     if (_loopThread) {
         try {
             _loopThread->join();
-        } catch (...) {
-        }
+        } catch (...) {}
         delete _loopThread;
         _loopThread = nullptr;
     }
@@ -293,7 +300,9 @@ EventPollerPool& EventPollerPool::Instance() {
     return ret;
 }
 
-EventPoller::Ptr EventPollerPool::getFirstPoller() { return std::dynamic_pointer_cast<EventPoller>(_threads.front()); }
+EventPoller::Ptr EventPollerPool::getFirstPoller() {
+    return std::dynamic_pointer_cast<EventPoller>(_threads.front());
+}
 
 EventPoller::Ptr EventPollerPool::getPoller(bool preferCurrentThread) {
     auto poller = EventPoller::getCurrentPoller();
@@ -303,9 +312,13 @@ EventPoller::Ptr EventPollerPool::getPoller(bool preferCurrentThread) {
     return std::dynamic_pointer_cast<EventPoller>(getExecutor());
 }
 
-void EventPollerPool::setPoolSize(size_t size) { poolSize = size; }
+void EventPollerPool::setPoolSize(size_t size) {
+    poolSize = size;
+}
 
-void EventPollerPool::setEnableCpuAffinity(bool enable) { enableCpuAffinity = enable; }
+void EventPollerPool::setEnableCpuAffinity(bool enable) {
+    enableCpuAffinity = enable;
+}
 
 EventPollerPool::EventPollerPool() {
     auto size = addPoller("event poller", poolSize, ThreadPool::PRIORITY_HIGHEST, true, enableCpuAffinity);

@@ -11,7 +11,7 @@
 namespace myNet {
 
 class ThreadPool : public TaskExecutor {
-public:
+  public:
     enum Priority { PRIORITY_LOWEST = 0, PRIORITY_LOW, PRIORITY_NORMAL, PRIORITY_HIGH, PRIORITY_HIGHEST };
 
     ThreadPool(int num = 1, Priority priority = PRIORITY_HIGH, bool autoStart = true) {
@@ -48,7 +48,9 @@ public:
         return ret;
     };
 
-    size_t getTaskSize() { return _taskQueue.size(); };
+    size_t getTaskSize() {
+        return _taskQueue.size();
+    };
 
     static bool setPriority(Priority priority = PRIORITY_NORMAL, std::thread::native_handle_type threadId = 0) {
         static int Min = sched_get_priority_min(SCHED_OTHER);
@@ -77,7 +79,7 @@ public:
         }
     };
 
-private:
+  private:
     void run() {
         ThreadPool::setPriority(_priority);
 
@@ -93,7 +95,7 @@ private:
             try {
                 (*task)();
                 task = nullptr;
-            } catch (std::exception &ex) {
+            } catch (std::exception& ex) {
                 ErrorL << "ThreadPool catch a exception: " << ex.what();
             }
         }
@@ -106,6 +108,6 @@ private:
     toolkit::Logger::Ptr _logger;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // ThreadPool_hpp
+#endif // ThreadPool_hpp

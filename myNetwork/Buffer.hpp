@@ -22,9 +22,13 @@ class Buffer : public noncopyable {
 
     virtual char* data() const = 0;
     virtual size_t size() const = 0;
-    virtual size_t getCapacity() const { return size(); }
+    virtual size_t getCapacity() const {
+        return size();
+    }
 
-    virtual std::string toString() const { return std::string(data(), size()); }
+    virtual std::string toString() const {
+        return std::string(data(), size());
+    }
 };
 
 class BufferString : public Buffer {
@@ -34,8 +38,12 @@ class BufferString : public Buffer {
     BufferString(std::string data, size_t offset = 0, size_t len = 0);
     ~BufferString() override = default;
 
-    char* data() const override { return const_cast<char*>(_data.data()) + _offset; }
-    size_t size() const override { return _size; }
+    char* data() const override {
+        return const_cast<char*>(_data.data()) + _offset;
+    }
+    size_t size() const override {
+        return _size;
+    }
 
   private:
     std::string _data;
@@ -47,7 +55,9 @@ class BufferRaw : public Buffer {
   public:
     using Ptr = std::shared_ptr<BufferRaw>;
 
-    static Ptr create() { return std::make_shared<BufferRaw>(); };
+    static Ptr create() {
+        return std::make_shared<BufferRaw>();
+    };
 
     ~BufferRaw() override {
         if (_data) {
@@ -55,11 +65,17 @@ class BufferRaw : public Buffer {
         }
     }
 
-    char* data() const override { return _data; }
-    size_t size() const override { return _size; }
+    char* data() const override {
+        return _data;
+    }
+    size_t size() const override {
+        return _size;
+    }
 
     void setCapacity(size_t capacity);
-    size_t getCapacity() const override { return _capacity; }
+    size_t getCapacity() const override {
+        return _capacity;
+    }
 
     virtual void setSize(size_t size);
 
@@ -82,10 +98,18 @@ class BufferSock : public Buffer {
     BufferSock(Buffer::Ptr buf, sockaddr* addr = nullptr, int addrLen = 0);
     ~BufferSock() override = default;
 
-    char* data() const override { return _buffer->data(); };
-    size_t size() const override { return _buffer->size(); };
-    const sockaddr* sockAddr() const { return (sockaddr*)&_addr; };
-    socklen_t sockLen() const { return _addrLen; };
+    char* data() const override {
+        return _buffer->data();
+    };
+    size_t size() const override {
+        return _buffer->size();
+    };
+    const sockaddr* sockAddr() const {
+        return (sockaddr*)&_addr;
+    };
+    socklen_t sockLen() const {
+        return _addrLen;
+    };
 
   private:
     int _addrLen{0};
@@ -113,7 +137,9 @@ class BufferCallback {
   public:
     BufferCallback(std::list<Buffer::Ptr> bufList, BufferList::onSendResultCB sendResultCB) : _bufList(std::move(bufList)), _sendResultCB(std::move(sendResultCB)){};
 
-    ~BufferCallback() { sendCompleted(false); }
+    ~BufferCallback() {
+        sendCompleted(false);
+    }
 
     void sendCompleted(bool flag);
 
@@ -129,8 +155,12 @@ class BufferSendMsg : public BufferList, public BufferCallback {
     BufferSendMsg(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB);
     ~BufferSendMsg() override = default;
 
-    bool empty() override { return _remainSize == 0; }
-    size_t count() override { return _iovec.size() - _iovecOffset; }
+    bool empty() override {
+        return _remainSize == 0;
+    }
+    size_t count() override {
+        return _iovec.size() - _iovecOffset;
+    }
     ssize_t send(int fd, int flags) override;
 
   private:

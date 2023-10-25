@@ -46,9 +46,13 @@ class Pipe {
         return ret;
     }
 
-    int writeFd() const { return _pipeFd[1]; };
+    int writeFd() const {
+        return _pipeFd[1];
+    };
 
-    int readFd() const { return _pipeFd[0]; };
+    int readFd() const {
+        return _pipeFd[0];
+    };
 
   private:
     // 0: recv, 1: send

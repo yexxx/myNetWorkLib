@@ -49,7 +49,9 @@ Socket::~Socket() {
     _sendBufSending.clear(); // buffer析构时操作时触发回调，手动触发避免析构顺序问题
 }
 
-Socket::Ptr Socket::createSocket(const EventPoller::Ptr& poller, bool enable_mutex) { return std::make_shared<Socket>(poller, enable_mutex); }
+Socket::Ptr Socket::createSocket(const EventPoller::Ptr& poller, bool enable_mutex) {
+    return std::make_shared<Socket>(poller, enable_mutex);
+}
 
 void Socket::setOnRead(onReadCB&& readCB) {
     std::lock_guard<MutexWrapper> lck(_mtxEvent);
@@ -385,7 +387,9 @@ ssize_t Socket::send(const char* buf, size_t size, sockaddr* addr, socklen_t add
     bufPtr->assign(buf, strlen(buf));
     return send(bufPtr, addr, addrLen, tryFlush);
 };
-ssize_t Socket::send(std::string buf, sockaddr* addr, socklen_t addrLen, bool tryFlush) { return send(std::make_shared<BufferString>(buf), addr, addrLen, tryFlush); };
+ssize_t Socket::send(std::string buf, sockaddr* addr, socklen_t addrLen, bool tryFlush) {
+    return send(std::make_shared<BufferString>(buf), addr, addrLen, tryFlush);
+};
 ssize_t Socket::send(Buffer::Ptr buf, sockaddr* addr, socklen_t addrLen, bool tryFlush) {
     if (!buf || buf->size() == 0) {
         return 0;
@@ -452,9 +456,13 @@ void Socket::enableRecv(bool enabled) {
                              EventPoller::Event_Error);
 };
 
-void Socket::setSendTimeOutSec(uint32_t sec) { _maxSendBufferMs = sec * 1000; };
+void Socket::setSendTimeOutSec(uint32_t sec) {
+    _maxSendBufferMs = sec * 1000;
+};
 
-bool Socket::isSocketBusy() const { return !_sendable.load(); };
+bool Socket::isSocketBusy() const {
+    return !_sendable.load();
+};
 
 // 涉及到fd要加锁
 int Socket::getFd() const {
@@ -467,7 +475,9 @@ SocketType Socket::getType() const {
     if (!_socketFd) return SocketType::Socket_Invalid;
     return _socketFd->getType();
 };
-const EventPoller::Ptr& Socket::getPoller() const { return _poller; };
+const EventPoller::Ptr& Socket::getPoller() const {
+    return _poller;
+};
 
 bool Socket::cloneFromListenSocket(const Socket& socket) {
     auto sock = cloneSocketFd(socket);
@@ -507,7 +517,9 @@ bool Socket::bindPeerAddr(const sockaddr* addr, socklen_t addrLen) {
     return true;
 };
 
-void Socket::setSendFlag(int flags) { _sockFlags = flags; };
+void Socket::setSendFlag(int flags) {
+    _sockFlags = flags;
+};
 size_t Socket::getSendBufferCount() const {
     size_t ret = 0;
     {
@@ -516,13 +528,14 @@ size_t Socket::getSendBufferCount() const {
     }
     {
         std::lock_guard<MutexWrapper> lck(_mtxSendBufSending);
-        for (auto& b : _sendBufSending)
-            ret += b->count();
+        for (auto& b : _sendBufSending) ret += b->count();
     }
 
     return ret;
 };
-uint64_t Socket::elapsedTimeAfterFlushed() const { return _sendFlushTicker.elapsedTime(); };
+uint64_t Socket::elapsedTimeAfterFlushed() const {
+    return _sendFlushTicker.elapsedTime();
+};
 
 int Socket::getRecvSpeed() {
     _enableSpeed = true;
@@ -553,7 +566,9 @@ uint16_t Socket::get_peerPort() {
     if (!_socketFd) return 0;
     return SocketUtil::getPeerPort(_socketFd->getFd());
 };
-std::string Socket::getIdentifier() const { return "Socket" + std::to_string(reinterpret_cast<uint64_t>(this)); };
+std::string Socket::getIdentifier() const {
+    return "Socket" + std::to_string(reinterpret_cast<uint64_t>(this));
+};
 
 SocketFD::Ptr Socket::cloneSocketFd(const Socket& sock) {
     SocketFD::Ptr socketFD;
@@ -572,7 +587,9 @@ SocketFD::Ptr Socket::setPeerSock(int fd) {
     return sock;
 };
 
-SocketFD::Ptr Socket::makeSocketFD(int fd, SocketType type) { return std::make_shared<SocketFD>(fd, type, _poller); };
+SocketFD::Ptr Socket::makeSocketFD(int fd, SocketType type) {
+    return std::make_shared<SocketFD>(fd, type, _poller);
+};
 
 void Socket::onWriteable(const SocketFD::Ptr& sock) {
     bool sendEmpty{false}, waitEmpty{false};
@@ -716,14 +733,18 @@ ssize_t SocketSender::send(const char* buf, size_t size) {
     buffer->assign(buf, size);
     return send(std::move(buffer));
 };
-ssize_t SocketSender::send(const std::string buf) { return send(std::make_shared<BufferString>(buf)); };
+ssize_t SocketSender::send(const std::string buf) {
+    return send(std::make_shared<BufferString>(buf));
+};
 
 SocketHelper::SocketHelper(const Socket::Ptr& sock) {
     setSock(sock);
     setOnCreateSocket(nullptr);
 }
 
-void SocketHelper::setSendFlushFlag(bool tryFlush) { _tryFlush = tryFlush; };
+void SocketHelper::setSendFlushFlag(bool tryFlush) {
+    _tryFlush = tryFlush;
+};
 void SocketHelper::setSendFlag(int flags) {
     if (!_sock) return;
     _sock->setSendFlag(flags);
@@ -742,14 +763,18 @@ void SocketHelper::setOnCreateSocket(Socket::onCreateSocketCB createSocketCB) {
     }
 };
 
-Socket::Ptr SocketHelper::createSocket() { return _createSocketCB(_poller); };
+Socket::Ptr SocketHelper::createSocket() {
+    return _createSocketCB(_poller);
+};
 
 int SocketHelper::flashAll() {
     if (!_sock) return -1;
     return _sock->flushAll();
 };
 
-const Socket::Ptr& SocketHelper::getSocket() const { return _sock; };
+const Socket::Ptr& SocketHelper::getSocket() const {
+    return _sock;
+};
 const EventPoller::Ptr& SocketHelper::getPoller() const {
     assert(_poller); // 这儿去掉会怎么样
     return _poller;
@@ -771,8 +796,12 @@ uint16_t SocketHelper::get_peerPort() {
     return _peerPort;
 };
 
-Task::Ptr SocketHelper::async(TaskIn task, bool maySync) { return _poller->async(std::move(task), maySync); };
-Task::Ptr SocketHelper::async_first(TaskIn task, bool maySync) { return _poller->async_first(std::move(task), maySync); };
+Task::Ptr SocketHelper::async(TaskIn task, bool maySync) {
+    return _poller->async(std::move(task), maySync);
+};
+Task::Ptr SocketHelper::async_first(TaskIn task, bool maySync) {
+    return _poller->async_first(std::move(task), maySync);
+};
 
 ssize_t SocketHelper::send(Buffer::Ptr buf) {
     if (!_sock) {
@@ -786,7 +815,9 @@ void SocketHelper::shutdown(const SocketException& socketException) {
     }
 };
 
-void SocketHelper::setPoller(const EventPoller::Ptr& poller) { _poller = poller; };
+void SocketHelper::setPoller(const EventPoller::Ptr& poller) {
+    _poller = poller;
+};
 void SocketHelper::setSock(const Socket::Ptr& sock) {
     _peerPort = 0;
     _localPort = 0;

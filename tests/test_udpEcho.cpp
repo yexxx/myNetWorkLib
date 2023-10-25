@@ -23,7 +23,9 @@ class tEchoSession : public toolkit::Session {
         WarnL << buffer->toString();
         send(buffer);
     }
-    void onError(const toolkit::SockException& err) override { WarnL << err.what(); }
+    void onError(const toolkit::SockException& err) override {
+        WarnL << err.what();
+    }
 
     void onManager() override {}
 };
@@ -41,18 +43,26 @@ class EchoSession : public Session {
         WarnL << buffer->toString();
         send(buffer);
     }
-    void onErr(const SocketException& err) override { WarnL << err.what(); }
+    void onErr(const SocketException& err) override {
+        WarnL << err.what();
+    }
 
     void onManager() override {}
 };
 
 // 赋值struct sockaddr
-void makeAddr(struct sockaddr_storage* out, const char* ip, uint16_t port) { *out = SocketUtil::makeSockaddr(ip, port); }
+void makeAddr(struct sockaddr_storage* out, const char* ip, uint16_t port) {
+    *out = SocketUtil::makeSockaddr(ip, port);
+}
 
 // 获取struct sockaddr的IP字符串
-string getIP(struct sockaddr* addr) { return SocketUtil::inetNtoa(addr); }
+string getIP(struct sockaddr* addr) {
+    return SocketUtil::inetNtoa(addr);
+}
 
-uint16_t getPort(struct sockaddr* addr) { return SocketUtil::inetPort(addr); }
+uint16_t getPort(struct sockaddr* addr) {
+    return SocketUtil::inetPort(addr);
+}
 
 int main() {
     // 初始化环境

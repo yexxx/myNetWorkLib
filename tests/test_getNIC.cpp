@@ -37,9 +37,13 @@ static inline string my_inet_ntop(int af, const void* addr) {
     return ret;
 }
 
-string inetNtoa(const struct in_addr& addr) { return my_inet_ntop(AF_INET, &addr); }
+string inetNtoa(const struct in_addr& addr) {
+    return my_inet_ntop(AF_INET, &addr);
+}
 
-std::string inetNtoa(const struct in6_addr& addr) { return my_inet_ntop(AF_INET6, &addr); }
+std::string inetNtoa(const struct in6_addr& addr) {
+    return my_inet_ntop(AF_INET6, &addr);
+}
 
 std::string inetNtoa(const struct sockaddr* addr) {
     switch (addr->sa_family) {

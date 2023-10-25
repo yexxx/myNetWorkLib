@@ -123,7 +123,9 @@ class EventPollerPool : public std::enable_shared_from_this<EventPollerPool>, pu
 
     EventPoller::Ptr getPoller(bool preferCurrentThread = true);
 
-    void setPreferCurrentThread(bool flag = true) { _preferCurrentThread = flag; };
+    void setPreferCurrentThread(bool flag = true) {
+        _preferCurrentThread = flag;
+    };
 
     static void setPoolSize(size_t size = 0);
 

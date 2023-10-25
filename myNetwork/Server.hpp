@@ -48,7 +48,9 @@ class SessionHelper {
     SessionHelper(const std::weak_ptr<Server>& Server, Session::Ptr session);
     ~SessionHelper();
 
-    const Session::Ptr getSession() const { return _session; };
+    const Session::Ptr getSession() const {
+        return _session;
+    };
 
   private:
     std::string _id;
@@ -61,7 +63,9 @@ class Server : public std::enable_shared_from_this<Server> {
   public:
     using Ptr = std::shared_ptr<Server>;
 
-    explicit Server(EventPoller::Ptr poller = nullptr) { _poller = (poller ? poller : EventPollerPool::Instance().getPoller()); };
+    explicit Server(EventPoller::Ptr poller = nullptr) {
+        _poller = (poller ? poller : EventPollerPool::Instance().getPoller());
+    };
     virtual ~Server() = default;
 
   protected:
