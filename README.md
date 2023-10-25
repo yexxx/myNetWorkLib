@@ -58,3 +58,7 @@
       ```
 5. TCP单次发送大于400KB的数据时会发生丢包，不知道哪儿出现了问题
    sendmsg 方法一次性发送数据大概最多再这个数量级，再多就不能一次发送了，需要根据其返回的发送成功的数据量大小做相应的策略保证数据全部发送成功
+
+
+## 代码格式
+clang-format: { BasedOnStyle: LLVM, UseTab: Never, IndentWidth: 4, TabWidth: 4, ColumnLimit: 200, PointerAlignment: Left, AllowShortIfStatementsOnASingleLine: true, AllowShortBlocksOnASingleLine: Empty, AllowShortFunctionsOnASingleLine: Empty, AllowShortLoopsOnASingleLine: true}
