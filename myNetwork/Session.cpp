@@ -19,4 +19,4 @@ std::string myNet::Session::getIdentifier() const {
     return _id;
 }
 
-}  // namespace myNet
+} // namespace myNet

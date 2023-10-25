@@ -10,7 +10,7 @@ using namespace std;
 using namespace myNet;
 
 #define MAX_TASK_SIZE (10000000)
-Semaphore g_sem;  // 信号量
+Semaphore g_sem; // 信号量
 atomic_llong g_produced(0);
 atomic_llong g_consumed(0);
 bool finish{false};

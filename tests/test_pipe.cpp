@@ -28,7 +28,7 @@ int main() {
     InfoL << "parent pid:" << parentPid << endl;
 
     // 定义一个管道，lambada类型的参数是管道收到数据的回调
-    PipeEventPoller pipe(nullptr, [](const char *buf, int size) {
+    PipeEventPoller pipe(nullptr, [](const char* buf, int size) {
         // 该管道有数据可读了
         InfoL << getpid() << " recv:" << buf;
     });
@@ -50,7 +50,7 @@ int main() {
     } else {
         // 父进程设置退出信号处理函数
         static Semaphore sem;
-        signal(SIGINT, [](int) { sem.post(); });  // 设置退出信号
+        signal(SIGINT, [](int) { sem.post(); }); // 设置退出信号
         sem.wait();
 
         InfoL << "父进程退出" << endl;

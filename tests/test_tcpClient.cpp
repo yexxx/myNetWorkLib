@@ -7,14 +7,14 @@ using namespace std;
 using namespace myNet;
 
 class TestClient : public TCPClient {
-public:
+  public:
     using Ptr = std::shared_ptr<TestClient>;
 
     TestClient() {}
     ~TestClient() {}
 
-protected:
-    virtual void onRecv(const Buffer::Ptr &buf) override {
+  protected:
+    virtual void onRecv(const Buffer::Ptr& buf) override {
         // 接收数据事件
         // DebugL << buf->data() << " from port:" << get_peerPort();
     }
@@ -29,7 +29,7 @@ protected:
         // (*this) << to_string(_nTick++) << " " << (Buffer::Ptr &)buf;
     }
 
-private:
+  private:
     int _nTick = 0;
 };
 
@@ -39,17 +39,18 @@ int main() {
     toolkit::Logger::Instance().setWriter(std::make_shared<toolkit::AsyncLogWriter>());
 
     TestClient::Ptr client(new TestClient());
-    client->connect("localhost", 9001);  // 连接服务器
+    client->connect("localhost", 9001); // 连接服务器
 
     if (getchar()) {
-        WarnL << client->getSocket()->getFd() << " : " << client->get_localIP() << " " << client->get_localPort() << " " << client->get_peerIP()
-              << " " << client->get_peerPort();
+        WarnL << client->getSocket()->getFd() << " : " << client->get_localIP() << " " << client->get_localPort() << " " << client->get_peerIP() << " " << client->get_peerPort();
     }
 
     string oneKByteSting;
-    for (auto i = 0; i < 1000; ++i) oneKByteSting.push_back('-');
+    for (auto i = 0; i < 1000; ++i)
+        oneKByteSting.push_back('-');
     string _1000KbytesString;
-    for (auto i = 0; i < 1000; ++i) _1000KbytesString += oneKByteSting;
+    for (auto i = 0; i < 1000; ++i)
+        _1000KbytesString += oneKByteSting;
     _1000KbytesString.push_back('\0');
     getchar();
 

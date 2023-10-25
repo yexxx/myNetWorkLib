@@ -20,7 +20,7 @@ void BufferRaw::setCapacity(size_t capacity) {
     if (_data) {
         if (capacity > _capacity) {
             delete[] _data;
-        } else if (_capacity < 2 * 1024 || _capacity < 2 * capacity) {  // 小于两字节或请求内存大于当前内存的一半，不用重新分配内存
+        } else if (_capacity < 2 * 1024 || _capacity < 2 * capacity) { // 小于两字节或请求内存大于当前内存的一半，不用重新分配内存
             return;
         }
     }
@@ -74,8 +74,7 @@ void BufferCallback::sendFrontSuccess() {
     _bufList.pop_front();
 }
 
-BufferSendMsg::BufferSendMsg(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB)
-    : BufferCallback(std::move(bufList), std::move(sendResultCB)), _iovec(_bufList.size()) {
+BufferSendMsg::BufferSendMsg(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB) : BufferCallback(std::move(bufList), std::move(sendResultCB)), _iovec(_bufList.size()) {
     size_t i = 0;
     for (auto& buf : _bufList) {
         _iovec[i].iov_base = buf->data();
@@ -138,7 +137,5 @@ void BufferSendMsg::reOffset(size_t n) {
     }
 }
 
-BufferList::Ptr BufferList::create(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB, bool isUdp) {
-    return std::make_shared<BufferSendMsg>(std::move(bufList), std::move(sendResultCB));
-}
-}  // namespace myNet
+BufferList::Ptr BufferList::create(std::list<Buffer::Ptr> bufList, onSendResultCB sendResultCB, bool isUdp) { return std::make_shared<BufferSendMsg>(std::move(bufList), std::move(sendResultCB)); }
+} // namespace myNet

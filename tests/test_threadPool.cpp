@@ -30,7 +30,7 @@ int main() {
         for (auto i = 0; i < task_count; ++i) {
             pool.async([token, i, task_second, &vec]() {
                 toolkit::setThreadName(("thread pool " + to_string(i)).data());
-                std::this_thread::sleep_for(std::chrono::seconds(task_second));  // 休眠三秒
+                std::this_thread::sleep_for(std::chrono::seconds(task_second)); // 休眠三秒
                 InfoL << "task " << i << " done!";
                 vec[i] = i;
             });

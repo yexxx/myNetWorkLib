@@ -13,7 +13,7 @@ static size_t poolSize = 0;
 static bool enableCpuAffinity = true;
 
 class WorkThreadPool : public std::enable_shared_from_this<WorkThreadPool>, public TaskExecutorGetter {
-public:
+  public:
     using Ptr = std::shared_ptr<WorkThreadPool>;
 
     static WorkThreadPool& Instance() {
@@ -30,10 +30,10 @@ public:
 
     EventPoller::Ptr getFirstPoller() { return std::dynamic_pointer_cast<EventPoller>(_threads.front()); };
 
-private:
+  private:
     WorkThreadPool() { addPoller("WorkPoller", poolSize, ThreadPool::PRIORITY_LOWEST, false, enableCpuAffinity); };
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // WorkThredPool_hpp
+#endif // WorkThredPool_hpp

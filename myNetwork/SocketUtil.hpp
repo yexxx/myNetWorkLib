@@ -26,7 +26,7 @@ namespace myNet {
 #define TCP_KEEPALIVE_TIME 120
 
 class SocketUtil {
-public:
+  public:
     // 创建tcp客户端套接字并连接服务器
     static int connect(const char* host, uint16_t port, bool async = true, const char* localIp = "::", uint16_t localPort = 0);
 
@@ -40,8 +40,7 @@ public:
     static int dissolveUdpSocket(int sockfd);
 
     // dns 解析
-    static bool getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family = AF_INET, int socketType = SOCK_STREAM,
-                            int protocol = IPPROTO_TCP, int expireSec = 60);
+    static bool getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family = AF_INET, int socketType = SOCK_STREAM, int protocol = IPPROTO_TCP, int expireSec = 60);
 
     // 获取socket 当前发生的错误
     static int getSocketError(int fd);
@@ -134,8 +133,7 @@ public:
     // interval: 探测时间间隔
     // keepAliveTime: 空闲时间
     // times: 探测次数
-    static int setKeepAlive(int fd, bool on = true, int interval = TCP_KEEPALIVE_INTERVAL, int keepAliveTime = TCP_KEEPALIVE_TIME,
-                            int times = TCP_KEEPALIVE_PROBE_TIMES);
+    static int setKeepAlive(int fd, bool on = true, int interval = TCP_KEEPALIVE_INTERVAL, int keepAliveTime = TCP_KEEPALIVE_TIME, int times = TCP_KEEPALIVE_PROBE_TIMES);
 
     // FD_CLOEXEC 特性 (在执行exec 时，是否关闭fd)
     // 没看懂具体是怎么实现的
@@ -170,7 +168,7 @@ public:
 
     */
 
-private:
+  private:
     // 将sockfd与本地地址绑定
     static int bindSock(int sockfd, const char* NICIp, uint16_t port, int family);
     static int bindSock4(int sockfd, const char* NICIp, uint16_t port);
@@ -181,17 +179,16 @@ private:
 };
 
 class DNSCache {
-public:
+  public:
     // 静态对象在内存中一般只有一份，方便共用
     static DNSCache& Instance() {
         static DNSCache instance;
         return instance;
     }
 
-    bool getDomainIP(const char* host, sockaddr_storage& storage, int family = AF_INET, int sockType = SOCK_STREAM, int protocol = IPPROTO_TCP,
-                     int expireSec = 60);
+    bool getDomainIP(const char* host, sockaddr_storage& storage, int family = AF_INET, int sockType = SOCK_STREAM, int protocol = IPPROTO_TCP, int expireSec = 60);
 
-private:
+  private:
     // 这个地方用shared_ptr 没看懂为什么
 
     std::shared_ptr<addrinfo> getCacheDomainIP(const char* host, int expireSec);
@@ -212,6 +209,6 @@ private:
     std::unordered_map<std::string, DNSItem> _dnsCache;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // SocketUtil_hpp
+#endif // SocketUtil_hpp

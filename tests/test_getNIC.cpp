@@ -21,15 +21,15 @@
 
 using namespace std;
 
-static inline string my_inet_ntop(int af, const void *addr);
-string inetNtoa(const struct in_addr &addr);
-std::string inetNtoa(const struct in6_addr &addr);
-std::string inetNtoa(const struct sockaddr *addr);
+static inline string my_inet_ntop(int af, const void* addr);
+string inetNtoa(const struct in_addr& addr);
+std::string inetNtoa(const struct in6_addr& addr);
+std::string inetNtoa(const struct sockaddr* addr);
 
-static inline string my_inet_ntop(int af, const void *addr) {
+static inline string my_inet_ntop(int af, const void* addr) {
     string ret;
     ret.resize(128);
-    if (!inet_ntop(af, const_cast<void *>(addr), (char *)ret.data(), ret.size())) {
+    if (!inet_ntop(af, const_cast<void*>(addr), (char*)ret.data(), ret.size())) {
         ret.clear();
     } else {
         ret.resize(strlen(ret.data()));
@@ -37,26 +37,25 @@ static inline string my_inet_ntop(int af, const void *addr) {
     return ret;
 }
 
-string inetNtoa(const struct in_addr &addr) {
-    return my_inet_ntop(AF_INET, &addr);
-}
+string inetNtoa(const struct in_addr& addr) { return my_inet_ntop(AF_INET, &addr); }
 
-std::string inetNtoa(const struct in6_addr &addr) {
-    return my_inet_ntop(AF_INET6, &addr);
-}
+std::string inetNtoa(const struct in6_addr& addr) { return my_inet_ntop(AF_INET6, &addr); }
 
-std::string inetNtoa(const struct sockaddr *addr) {
+std::string inetNtoa(const struct sockaddr* addr) {
     switch (addr->sa_family) {
-    case AF_INET: return inetNtoa(((struct sockaddr_in *)addr)->sin_addr);
+    case AF_INET:
+        return inetNtoa(((struct sockaddr_in*)addr)->sin_addr);
     case AF_INET6: {
-        if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6 *)addr)->sin6_addr)) {
+        if (IN6_IS_ADDR_V4MAPPED(&((struct sockaddr_in6*)addr)->sin6_addr)) {
             struct in_addr addr4;
-            memcpy(&addr4, 12 + (char *)&(((struct sockaddr_in6 *)addr)->sin6_addr), 4);
+            memcpy(&addr4, 12 + (char*)&(((struct sockaddr_in6*)addr)->sin6_addr), 4);
             return inetNtoa(addr4);
         }
-        return inetNtoa(((struct sockaddr_in6 *)addr)->sin6_addr);
+        return inetNtoa(((struct sockaddr_in6*)addr)->sin6_addr);
     }
-    default: assert(false); return "";
+    default:
+        assert(false);
+        return "";
     }
 }
 
@@ -78,7 +77,7 @@ std::vector<std::pair<std::string, std::string>> getNICList() {
     };
     ::close(sockfd);
 
-    ifreq *iter = (ifreq *)buf;
+    ifreq* iter = (ifreq*)buf;
     for (int i = mifconf.ifc_len / sizeof(ifreq); i > 0; --i, ++iter) {
         ret.push_back({inetNtoa(&(iter->ifr_addr)), iter->ifr_name});
     }
@@ -86,8 +85,7 @@ std::vector<std::pair<std::string, std::string>> getNICList() {
     return ret;
 }
 
-template <typename FUN>
-void for_each_netAdapter_posix(FUN &&fun) {  // type: struct ifreq *
+template <typename FUN> void for_each_netAdapter_posix(FUN&& fun) { // type: struct ifreq *
     struct ifconf ifconf;
     char buf[1024 * 10];
     // 初始化ifconf
@@ -97,13 +95,13 @@ void for_each_netAdapter_posix(FUN &&fun) {  // type: struct ifreq *
     if (sockfd < 0) {
         return;
     }
-    if (-1 == ioctl(sockfd, SIOCGIFCONF, &ifconf)) {  // 获取所有接口信息
+    if (-1 == ioctl(sockfd, SIOCGIFCONF, &ifconf)) { // 获取所有接口信息
         close(sockfd);
         return;
     }
     close(sockfd);
     // 接下来一个一个的获取IP地址
-    struct ifreq *adapter = (struct ifreq *)buf;
+    struct ifreq* adapter = (struct ifreq*)buf;
     for (int i = (ifconf.ifc_len / sizeof(struct ifreq)); i > 0; --i, ++adapter) {
         if (fun(adapter)) {
             break;
@@ -111,14 +109,13 @@ void for_each_netAdapter_posix(FUN &&fun) {  // type: struct ifreq *
     }
 }
 
-bool check_ip(string &address, const string &ip) {
+bool check_ip(string& address, const string& ip) {
     if (ip != "127.0.0.1" && ip != "0.0.0.0") {
         /*获取一个有效IP*/
         address = ip;
         uint32_t addressInNetworkOrder = htonl(inet_addr(ip.data()));
         if (/*(addressInNetworkOrder >= 0x0A000000 && addressInNetworkOrder < 0x0E000000) ||*/
-            (addressInNetworkOrder >= 0xAC100000 && addressInNetworkOrder < 0xAC200000) ||
-            (addressInNetworkOrder >= 0xC0A80000 && addressInNetworkOrder < 0xC0A90000)) {
+            (addressInNetworkOrder >= 0xAC100000 && addressInNetworkOrder < 0xAC200000) || (addressInNetworkOrder >= 0xC0A80000 && addressInNetworkOrder < 0xC0A90000)) {
             // A类私有IP地址：
             // 10.0.0.0～10.255.255.255
             // B类私有IP地址：
@@ -139,7 +136,7 @@ bool check_ip(string &address, const string &ip) {
 
 string get_local_ip() {
     string address = "127.0.0.1";
-    for_each_netAdapter_posix([&](struct ifreq *adapter) {
+    for_each_netAdapter_posix([&](struct ifreq* adapter) {
         string ip = inetNtoa(&(adapter->ifr_addr));
         if (strstr(adapter->ifr_name, "docker")) {
             return false;
@@ -151,7 +148,7 @@ string get_local_ip() {
 
 int main() {
     auto NCIList = getNICList();
-    for (auto &i : NCIList) {
+    for (auto& i : NCIList) {
         cout << i.second << " : " << i.first << endl;
     }
     cout << get_local_ip() << endl;

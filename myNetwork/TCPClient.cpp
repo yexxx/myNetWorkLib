@@ -97,4 +97,4 @@ void TCPClient::onSocketConnect(const SocketException& e) {
     onConnect(e);
 }
 
-}  // namespace myNet
+} // namespace myNet

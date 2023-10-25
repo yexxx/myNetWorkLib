@@ -9,15 +9,15 @@ long long i = 0;
 long long MB_lst = 0;
 
 class EchoSession : public Session {
-public:
-    EchoSession(const Socket::Ptr &pSock) : Session(pSock) {
+  public:
+    EchoSession(const Socket::Ptr& pSock) : Session(pSock) {
         // DebugL;
     }
     virtual ~EchoSession() {
         // DebugL;
     }
 
-    void onRecv(const Buffer::Ptr &buffer) override {
+    void onRecv(const Buffer::Ptr& buffer) override {
         i += (buffer->toString()).size();
         // WarnL << i;
         if (i / (1000 * 1000) > MB_lst) {
@@ -27,24 +27,18 @@ public:
         // WarnL << buffer->toString();
         send(buffer);
     }
-    void onErr(const SocketException &err) override { WarnL << err.what(); }
+    void onErr(const SocketException& err) override { WarnL << err.what(); }
 
     void onManager() override {}
 };
 
 // 赋值struct sockaddr
-void makeAddr(struct sockaddr_storage *out, const char *ip, uint16_t port) {
-    *out = SocketUtil::makeSockaddr(ip, port);
-}
+void makeAddr(struct sockaddr_storage* out, const char* ip, uint16_t port) { *out = SocketUtil::makeSockaddr(ip, port); }
 
 // 获取struct sockaddr的IP字符串
-string getIP(struct sockaddr *addr) {
-    return SocketUtil::inetNtoa(addr);
-}
+string getIP(struct sockaddr* addr) { return SocketUtil::inetNtoa(addr); }
 
-uint16_t getPort(struct sockaddr *addr) {
-    return SocketUtil::inetPort(addr);
-}
+uint16_t getPort(struct sockaddr* addr) { return SocketUtil::inetPort(addr); }
 
 int main() {
     // 初始化环境

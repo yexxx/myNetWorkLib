@@ -405,8 +405,7 @@
  */
 #if defined(EHOSTDOWN) && !defined(_WIN32)
 #define UV__EHOSTDOWN (-EHOSTDOWN)
-#elif defined(__APPLE__) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || \
-    defined(__OpenBSD__)
+#elif defined(__APPLE__) || defined(__DragonFly__) || defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__OpenBSD__)
 #define UV__EHOSTDOWN (-64)
 #else
 #define UV__EHOSTDOWN (-4031)
@@ -418,83 +417,83 @@
 #define UV__EREMOTEIO (-4030)
 #endif
 
-#define UV_ERRNO_MAP(XX)                                           \
-    XX(E2BIG, "argument list too long")                            \
-    XX(EACCES, "permission denied")                                \
-    XX(EADDRINUSE, "address already in use")                       \
-    XX(EADDRNOTAVAIL, "address not available")                     \
-    XX(EAFNOSUPPORT, "address family not supported")               \
-    XX(EAGAIN, "resource temporarily unavailable")                 \
-    XX(EAI_ADDRFAMILY, "address family not supported")             \
-    XX(EAI_AGAIN, "temporary failure")                             \
-    XX(EAI_BADFLAGS, "bad ai_flags value")                         \
-    XX(EAI_BADHINTS, "invalid value for hints")                    \
-    XX(EAI_CANCELED, "request canceled")                           \
-    XX(EAI_FAIL, "permanent failure")                              \
-    XX(EAI_FAMILY, "ai_family not supported")                      \
-    XX(EAI_MEMORY, "out of memory")                                \
-    XX(EAI_NODATA, "no address")                                   \
-    XX(EAI_NONAME, "unknown node or service")                      \
-    XX(EAI_OVERFLOW, "argument buffer overflow")                   \
-    XX(EAI_PROTOCOL, "resolved protocol is unknown")               \
-    XX(EAI_SERVICE, "service not available for socket type")       \
-    XX(EAI_SOCKTYPE, "socket type not supported")                  \
-    XX(EALREADY, "connection already in progress")                 \
-    XX(EBADF, "bad file descriptor")                               \
-    XX(EBUSY, "resource busy or locked")                           \
-    XX(ECANCELED, "operation canceled")                            \
-    XX(ECHARSET, "invalid Unicode character")                      \
-    XX(ECONNABORTED, "software caused connection abort")           \
-    XX(ECONNREFUSED, "connection refused")                         \
-    XX(ECONNRESET, "connection reset by peer")                     \
-    XX(EDESTADDRREQ, "destination address required")               \
-    XX(EEXIST, "file already exists")                              \
-    XX(EFAULT, "bad address in system call argument")              \
-    XX(EFBIG, "file too large")                                    \
-    XX(EHOSTUNREACH, "host is unreachable")                        \
-    XX(EINTR, "interrupted system call")                           \
-    XX(EINVAL, "invalid argument")                                 \
-    XX(EIO, "i/o error")                                           \
-    XX(EISCONN, "socket is already connected")                     \
-    XX(EISDIR, "illegal operation on a directory")                 \
-    XX(ELOOP, "too many symbolic links encountered")               \
-    XX(EMFILE, "too many open files")                              \
-    XX(EMSGSIZE, "message too long")                               \
-    XX(ENAMETOOLONG, "name too long")                              \
-    XX(ENETDOWN, "network is down")                                \
-    XX(ENETUNREACH, "network is unreachable")                      \
-    XX(ENFILE, "file table overflow")                              \
-    XX(ENOBUFS, "no buffer space available")                       \
-    XX(ENODEV, "no such device")                                   \
-    XX(ENOENT, "no such file or directory")                        \
-    XX(ENOMEM, "not enough memory")                                \
-    XX(ENONET, "machine is not on the network")                    \
-    XX(ENOPROTOOPT, "protocol not available")                      \
-    XX(ENOSPC, "no space left on device")                          \
-    XX(ENOSYS, "function not implemented")                         \
-    XX(ENOTCONN, "socket is not connected")                        \
-    XX(ENOTDIR, "not a directory")                                 \
-    XX(ENOTEMPTY, "directory not empty")                           \
-    XX(ENOTSOCK, "socket operation on non-socket")                 \
-    XX(ENOTSUP, "operation not supported on socket")               \
-    XX(EPERM, "operation not permitted")                           \
-    XX(EPIPE, "broken pipe")                                       \
-    XX(EPROTO, "protocol error")                                   \
-    XX(EPROTONOSUPPORT, "protocol not supported")                  \
-    XX(EPROTOTYPE, "protocol wrong type for socket")               \
-    XX(ERANGE, "result too large")                                 \
-    XX(EROFS, "read-only file system")                             \
-    XX(ESHUTDOWN, "cannot send after transport endpoint shutdown") \
-    XX(ESPIPE, "invalid seek")                                     \
-    XX(ESRCH, "no such process")                                   \
-    XX(ETIMEDOUT, "connection timed out")                          \
-    XX(ETXTBSY, "text file is busy")                               \
-    XX(EXDEV, "cross-device link not permitted")                   \
-    XX(UNKNOWN, "unknown error")                                   \
-    XX(EOF, "end of file")                                         \
-    XX(ENXIO, "no such device or address")                         \
-    XX(EMLINK, "too many links")                                   \
-    XX(EHOSTDOWN, "host is down")                                  \
+#define UV_ERRNO_MAP(XX)                                                                                                                                                                               \
+    XX(E2BIG, "argument list too long")                                                                                                                                                                \
+    XX(EACCES, "permission denied")                                                                                                                                                                    \
+    XX(EADDRINUSE, "address already in use")                                                                                                                                                           \
+    XX(EADDRNOTAVAIL, "address not available")                                                                                                                                                         \
+    XX(EAFNOSUPPORT, "address family not supported")                                                                                                                                                   \
+    XX(EAGAIN, "resource temporarily unavailable")                                                                                                                                                     \
+    XX(EAI_ADDRFAMILY, "address family not supported")                                                                                                                                                 \
+    XX(EAI_AGAIN, "temporary failure")                                                                                                                                                                 \
+    XX(EAI_BADFLAGS, "bad ai_flags value")                                                                                                                                                             \
+    XX(EAI_BADHINTS, "invalid value for hints")                                                                                                                                                        \
+    XX(EAI_CANCELED, "request canceled")                                                                                                                                                               \
+    XX(EAI_FAIL, "permanent failure")                                                                                                                                                                  \
+    XX(EAI_FAMILY, "ai_family not supported")                                                                                                                                                          \
+    XX(EAI_MEMORY, "out of memory")                                                                                                                                                                    \
+    XX(EAI_NODATA, "no address")                                                                                                                                                                       \
+    XX(EAI_NONAME, "unknown node or service")                                                                                                                                                          \
+    XX(EAI_OVERFLOW, "argument buffer overflow")                                                                                                                                                       \
+    XX(EAI_PROTOCOL, "resolved protocol is unknown")                                                                                                                                                   \
+    XX(EAI_SERVICE, "service not available for socket type")                                                                                                                                           \
+    XX(EAI_SOCKTYPE, "socket type not supported")                                                                                                                                                      \
+    XX(EALREADY, "connection already in progress")                                                                                                                                                     \
+    XX(EBADF, "bad file descriptor")                                                                                                                                                                   \
+    XX(EBUSY, "resource busy or locked")                                                                                                                                                               \
+    XX(ECANCELED, "operation canceled")                                                                                                                                                                \
+    XX(ECHARSET, "invalid Unicode character")                                                                                                                                                          \
+    XX(ECONNABORTED, "software caused connection abort")                                                                                                                                               \
+    XX(ECONNREFUSED, "connection refused")                                                                                                                                                             \
+    XX(ECONNRESET, "connection reset by peer")                                                                                                                                                         \
+    XX(EDESTADDRREQ, "destination address required")                                                                                                                                                   \
+    XX(EEXIST, "file already exists")                                                                                                                                                                  \
+    XX(EFAULT, "bad address in system call argument")                                                                                                                                                  \
+    XX(EFBIG, "file too large")                                                                                                                                                                        \
+    XX(EHOSTUNREACH, "host is unreachable")                                                                                                                                                            \
+    XX(EINTR, "interrupted system call")                                                                                                                                                               \
+    XX(EINVAL, "invalid argument")                                                                                                                                                                     \
+    XX(EIO, "i/o error")                                                                                                                                                                               \
+    XX(EISCONN, "socket is already connected")                                                                                                                                                         \
+    XX(EISDIR, "illegal operation on a directory")                                                                                                                                                     \
+    XX(ELOOP, "too many symbolic links encountered")                                                                                                                                                   \
+    XX(EMFILE, "too many open files")                                                                                                                                                                  \
+    XX(EMSGSIZE, "message too long")                                                                                                                                                                   \
+    XX(ENAMETOOLONG, "name too long")                                                                                                                                                                  \
+    XX(ENETDOWN, "network is down")                                                                                                                                                                    \
+    XX(ENETUNREACH, "network is unreachable")                                                                                                                                                          \
+    XX(ENFILE, "file table overflow")                                                                                                                                                                  \
+    XX(ENOBUFS, "no buffer space available")                                                                                                                                                           \
+    XX(ENODEV, "no such device")                                                                                                                                                                       \
+    XX(ENOENT, "no such file or directory")                                                                                                                                                            \
+    XX(ENOMEM, "not enough memory")                                                                                                                                                                    \
+    XX(ENONET, "machine is not on the network")                                                                                                                                                        \
+    XX(ENOPROTOOPT, "protocol not available")                                                                                                                                                          \
+    XX(ENOSPC, "no space left on device")                                                                                                                                                              \
+    XX(ENOSYS, "function not implemented")                                                                                                                                                             \
+    XX(ENOTCONN, "socket is not connected")                                                                                                                                                            \
+    XX(ENOTDIR, "not a directory")                                                                                                                                                                     \
+    XX(ENOTEMPTY, "directory not empty")                                                                                                                                                               \
+    XX(ENOTSOCK, "socket operation on non-socket")                                                                                                                                                     \
+    XX(ENOTSUP, "operation not supported on socket")                                                                                                                                                   \
+    XX(EPERM, "operation not permitted")                                                                                                                                                               \
+    XX(EPIPE, "broken pipe")                                                                                                                                                                           \
+    XX(EPROTO, "protocol error")                                                                                                                                                                       \
+    XX(EPROTONOSUPPORT, "protocol not supported")                                                                                                                                                      \
+    XX(EPROTOTYPE, "protocol wrong type for socket")                                                                                                                                                   \
+    XX(ERANGE, "result too large")                                                                                                                                                                     \
+    XX(EROFS, "read-only file system")                                                                                                                                                                 \
+    XX(ESHUTDOWN, "cannot send after transport endpoint shutdown")                                                                                                                                     \
+    XX(ESPIPE, "invalid seek")                                                                                                                                                                         \
+    XX(ESRCH, "no such process")                                                                                                                                                                       \
+    XX(ETIMEDOUT, "connection timed out")                                                                                                                                                              \
+    XX(ETXTBSY, "text file is busy")                                                                                                                                                                   \
+    XX(EXDEV, "cross-device link not permitted")                                                                                                                                                       \
+    XX(UNKNOWN, "unknown error")                                                                                                                                                                       \
+    XX(EOF, "end of file")                                                                                                                                                                             \
+    XX(ENXIO, "no such device or address")                                                                                                                                                             \
+    XX(EMLINK, "too many links")                                                                                                                                                                       \
+    XX(EHOSTDOWN, "host is down")                                                                                                                                                                      \
     XX(EREMOTEIO, "remote I/O error")
 
 namespace myNet {
@@ -506,10 +505,10 @@ typedef enum {
         UV_ERRNO_MAX = UV__EOF - 1
 } uv_errno_t;
 
-const char *uv_err_name(int err);
-const char *uv_strerror(int err);
+const char* uv_err_name(int err);
+const char* uv_strerror(int err);
 int uv_translate_posix_error(int err);
 
-}  // namespace myNet
+} // namespace myNet
 
 #endif /* UV_ERRNO_H_ */

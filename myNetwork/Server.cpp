@@ -49,4 +49,4 @@ SessionHelper::~SessionHelper() {
     _sessionMap->del(_id);
 }
 
-}  // namespace myNet
+} // namespace myNet

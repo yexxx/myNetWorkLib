@@ -36,7 +36,7 @@ int main() {
 
     // 退出程序事件处理
     static Semaphore sem;
-    signal(SIGINT, [](int) { sem.post(); });  // 设置退出信号
+    signal(SIGINT, [](int) { sem.post(); }); // 设置退出信号
     sem.wait();
     return 0;
 }

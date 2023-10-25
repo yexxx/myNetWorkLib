@@ -8,13 +8,11 @@
 
 namespace myNet {
 
-template <typename TaskType>
-class TaskQueue {
-public:
+template <typename TaskType> class TaskQueue {
+  public:
     using LOCK_GUDAD = std::lock_guard<std::mutex>;
 
-    template <typename TaskFunc>
-    void pushTask(TaskFunc&& taskFunc) {
+    template <typename TaskFunc> void pushTask(TaskFunc&& taskFunc) {
         {
             LOCK_GUDAD lck(_mtx);
             _queue.emplace_back(std::forward<TaskFunc>(taskFunc));
@@ -22,8 +20,7 @@ public:
         _sem.post();
     }
 
-    template <typename TaskFunc>
-    void pushTaskFirst(TaskFunc& taskFunc) {
+    template <typename TaskFunc> void pushTaskFirst(TaskFunc& taskFunc) {
         {
             LOCK_GUDAD lck(_mtx);
             _queue.emplace_front(std::forward<TaskFunc>(taskFunc));
@@ -53,12 +50,12 @@ public:
         return _queue.size();
     }
 
-private:
+  private:
     std::list<TaskType> _queue;
     mutable std::mutex _mtx;
     Semaphore _sem;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // TaskQueue_hpp
+#endif // TaskQueue_hpp

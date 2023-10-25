@@ -10,7 +10,7 @@
 namespace myNet {
 
 class PipeEventPoller {
-public:
+  public:
     using Ptr = std::shared_ptr<PipeEventPoller>;
 
     PipeEventPoller(const EventPoller::Ptr& poller = nullptr, const std::function<void(const char* buf, int size)> cb = nullptr);
@@ -19,13 +19,13 @@ public:
 
     void send(const char* buf, int size = 0) { _pipe->write(buf, size); }
 
-private:
+  private:
     std::shared_ptr<Pipe> _pipe;
     EventPoller::Ptr _poller;
 };
 
 class Timer {
-public:
+  public:
     using Ptr = std::shared_ptr<Timer>;
 
     // cb 返回true 表示重复
@@ -33,11 +33,11 @@ public:
 
     ~Timer();
 
-private:
+  private:
     std::shared_ptr<EventPoller::DelayTask> _task;
     EventPoller::Ptr _poller;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // EventPollerApp_hpp
+#endif // EventPollerApp_hpp

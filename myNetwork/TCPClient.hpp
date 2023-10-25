@@ -11,7 +11,7 @@ namespace myNet {
 
 // 感觉跟Session 差不多，应该可以写成Session 的子类，之后尝试
 class TCPClient : public std::enable_shared_from_this<TCPClient>, public SocketHelper {
-public:
+  public:
     using Ptr = std::shared_ptr<TCPClient>;
 
     TCPClient(const EventPoller::Ptr& poller = nullptr);
@@ -28,7 +28,7 @@ public:
 
     virtual void setNetAdapter(const std::string& localIp) { _netAdapter = localIp; }
 
-protected:
+  protected:
     // 连接成功与否
     virtual void onConnect(const SocketException& e) {
         if (e) {
@@ -48,7 +48,7 @@ protected:
     // 自定义管理，每两秒执行一次
     virtual void onManager() {}
 
-private:
+  private:
     // Socket::connect 方法中的onErrCB 执行的内容
     // 无错误时设置onFlush 和onRead，否则处理错误
     void onSocketConnect(const SocketException& e);
@@ -57,6 +57,6 @@ private:
     std::shared_ptr<Timer> _timer;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // TCPClient_hpp
+#endif // TCPClient_hpp

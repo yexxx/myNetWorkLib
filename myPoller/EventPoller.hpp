@@ -17,7 +17,7 @@
 namespace myNet {
 
 class EventPoller : public TaskExecutor, public std::enable_shared_from_this<EventPoller> {
-public:
+  public:
     friend class TaskExecutorGetter;
 
     using Ptr = std::shared_ptr<EventPoller>;
@@ -27,10 +27,10 @@ public:
     using DelayTask = TaskCancelable<uint64_t(void)>;
 
     enum PollEvent {
-        Event_Read = 1 << 0,   // 读事件
-        Event_Write = 1 << 1,  // 写事件
-        Event_Error = 1 << 2,  // 错误事件
-        Event_LT = 1 << 3,     // 水平触发
+        Event_Read = 1 << 0,  // 读事件
+        Event_Write = 1 << 1, // 写事件
+        Event_Error = 1 << 2, // 错误事件
+        Event_LT = 1 << 3,    // 水平触发
     };
 
     ~EventPoller();
@@ -60,7 +60,7 @@ public:
 
     const std::string& getThreadName() const;
 
-private:
+  private:
     using LOCK_GUARD = std::lock_guard<std::mutex>;
 
     EventPoller(std::string name, ThreadPool::Priority priority = ThreadPool::PRIORITY_HIGHEST);
@@ -113,7 +113,7 @@ private:
 };
 
 class EventPollerPool : public std::enable_shared_from_this<EventPollerPool>, public TaskExecutorGetter {
-public:
+  public:
     using Ptr = std::shared_ptr<EventPollerPool>;
     ~EventPollerPool() = default;
 
@@ -129,11 +129,11 @@ public:
 
     static void setEnableCpuAffinity(bool enable);
 
-private:
+  private:
     EventPollerPool();
     bool _preferCurrentThread{true};
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // EventPoller_hpp
+#endif // EventPoller_hpp

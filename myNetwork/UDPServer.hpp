@@ -6,7 +6,7 @@
 
 namespace myNet {
 class UDPServer : public Server {
-public:
+  public:
     using Ptr = std::shared_ptr<UDPServer>;
     using onCreateSocketCB = std::function<Socket::Ptr(const EventPoller::Ptr&, const Buffer::Ptr&, sockaddr*, int)>;
 
@@ -14,8 +14,7 @@ public:
     ~UDPServer() override;
 
     // 开始监听服务器
-    template <typename SessionType>
-    void start(uint16_t port, const std::string& host = "::");
+    template <typename SessionType> void start(uint16_t port, const std::string& host = "::");
 
     uint16_t getPort() {
         if (_socket) return _socket->get_localPort();
@@ -26,10 +25,10 @@ public:
 
     void setOnCreateSocket(onCreateSocketCB cb);
 
-protected:
+  protected:
     virtual void cloneFrom(const UDPServer& that);
 
-private:
+  private:
     // 定时管理 Session, UDP 会话超时处理
     void onManageSession();
 
@@ -62,13 +61,11 @@ private:
     std::function<SessionHelper::Ptr(const UDPServer::Ptr&, const Socket::Ptr&)> _sessionBuilder;
 };
 
-template <typename SessionType>
-inline void UDPServer::start(uint16_t port, const std::string& host) {
+template <typename SessionType> inline void UDPServer::start(uint16_t port, const std::string& host) {
     _sessionBuilder = [](const UDPServer::Ptr& server, const Socket::Ptr sock) {
         auto session = std::make_shared<SessionType>(sock);
         auto tmpOnCreateSocketCB = server->_onCreateSocketCB;
-        session->setOnCreateSocket(
-            [tmpOnCreateSocketCB](const EventPoller::Ptr& poller) { return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0); });
+        session->setOnCreateSocket([tmpOnCreateSocketCB](const EventPoller::Ptr& poller) { return tmpOnCreateSocketCB(poller, nullptr, nullptr, 0); });
         std::weak_ptr<Server> tserver = server;
         return std::make_shared<SessionHelper>(server, session);
     };
@@ -110,6 +107,6 @@ inline void UDPServer::start(uint16_t port, const std::string& host) {
     InfoL << "UDP server bind to [" << host << "]: " << port;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // UDPServer_hpp
+#endif // UDPServer_hpp

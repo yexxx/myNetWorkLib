@@ -27,7 +27,9 @@ static std::string makeSockId(sockaddr* addr, int) {
         memcpy(&ret[2], &(((sockaddr_in6*)addr)->sin6_addr), 16);
         return ret;
     }
-    default: assert(0); return "";
+    default:
+        assert(0);
+        return "";
     }
 }
 namespace myNet {
@@ -54,9 +56,7 @@ void UDPServer::setOnCreateSocket(onCreateSocketCB cb) {
     if (cb) {
         _onCreateSocketCB = cb;
     } else {
-        _onCreateSocketCB = [](const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) {
-            return Socket::createSocket(poller, false);
-        };
+        _onCreateSocketCB = [](const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addr_len) { return Socket::createSocket(poller, false); };
     }
     // 设置克隆服务器创建socket的方式
     if (!_cloned) {
@@ -247,8 +247,6 @@ const Session::Ptr& UDPServer::createSession(const std::string& id, const Buffer
     return static_cast<Session::Ptr>(nullptr);
 }
 
-Socket::Ptr UDPServer::createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) {
-    return _onCreateSocketCB(poller, buf, addr, addrLen);
-}
+Socket::Ptr UDPServer::createSocket(const EventPoller::Ptr& poller, const Buffer::Ptr& buf, sockaddr* addr, int addrLen) { return _onCreateSocketCB(poller, buf, addr, addrLen); }
 
-}  // namespace myNet
+} // namespace myNet

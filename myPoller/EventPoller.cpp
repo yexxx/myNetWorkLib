@@ -9,12 +9,9 @@
 #define EPOLL_SIZE 1024
 
 // 转换poller 和epoll 所使用的事件标识符
-#define toEpoll(event)                                                                                                                    \
-    (((event)&Event_Read) ? EPOLLIN : 0) | (((event)&Event_Write) ? EPOLLOUT : 0) | (((event)&Event_Error) ? (EPOLLHUP | EPOLLERR) : 0) | \
-        (((event)&Event_LT) ? 0 : EPOLLET)
-#define toPoller(epoll_event)                                                                                                                  \
-    (((epoll_event)&EPOLLIN) ? Event_Read : 0) | (((epoll_event)&EPOLLOUT) ? Event_Write : 0) | (((epoll_event)&EPOLLHUP) ? Event_Error : 0) | \
-        (((epoll_event)&EPOLLERR) ? Event_Error : 0)
+#define toEpoll(event) (((event) & Event_Read) ? EPOLLIN : 0) | (((event) & Event_Write) ? EPOLLOUT : 0) | (((event) & Event_Error) ? (EPOLLHUP | EPOLLERR) : 0) | (((event) & Event_LT) ? 0 : EPOLLET)
+#define toPoller(epoll_event)                                                                                                                                                                          \
+    (((epoll_event) & EPOLLIN) ? Event_Read : 0) | (((epoll_event) & EPOLLOUT) ? Event_Write : 0) | (((epoll_event) & EPOLLHUP) ? Event_Error : 0) | (((epoll_event) & EPOLLERR) ? Event_Error : 0)
 
 namespace myNet {
 
@@ -59,7 +56,7 @@ int EventPoller::addEvent(int fd, int event, PollEventCB cb) {
     }
 
     // 不是本线程的时间，异步到归属的线程处理
-    async([this, fd, event, cb]() { addEvent(fd, event, std::move(const_cast<PollEventCB &>(cb))); });
+    async([this, fd, event, cb]() { addEvent(fd, event, std::move(const_cast<PollEventCB&>(cb))); });
 
     return 0;
 }
@@ -67,8 +64,7 @@ int EventPoller::addEvent(int fd, int event, PollEventCB cb) {
 int EventPoller::delEvent(int fd, PollDelCB cb) {
     toolkit::TimeTicker();
     if (!cb) {
-        cb = [](bool success) {
-        };
+        cb = [](bool success) {};
     }
 
     if (isCurrentThread()) {
@@ -77,7 +73,7 @@ int EventPoller::delEvent(int fd, PollDelCB cb) {
         return success ? 0 : -1;
     }
 
-    async([this, fd, cb]() { delEvent(fd, std::move(const_cast<PollDelCB &>(cb))); });
+    async([this, fd, cb]() { delEvent(fd, std::move(const_cast<PollDelCB&>(cb))); });
 
     return 0;
 }
@@ -132,13 +128,9 @@ EventPoller::DelayTask::Ptr EventPoller::doDelayTask(uint64_t delayMs, std::func
     return ret;
 }
 
-bool EventPoller::isCurrentThread() {
-    return _loopThreadId == std::this_thread::get_id();
-}
+bool EventPoller::isCurrentThread() { return _loopThreadId == std::this_thread::get_id(); }
 
-EventPoller::Ptr EventPoller::getCurrentPoller() {
-    return currentPoller.lock();
-}
+EventPoller::Ptr EventPoller::getCurrentPoller() { return currentPoller.lock(); }
 
 BufferRaw::Ptr EventPoller::getSharedBuffer() {
     auto ret = _sharedBuffer.lock();
@@ -150,13 +142,9 @@ BufferRaw::Ptr EventPoller::getSharedBuffer() {
     return ret;
 }
 
-const std::thread::id &EventPoller::getThreadId() const {
-    return _loopThreadId;
-}
+const std::thread::id& EventPoller::getThreadId() const { return _loopThreadId; }
 
-const std::string &EventPoller::getThreadName() const {
-    return _loopThreadName;
-}
+const std::string& EventPoller::getThreadName() const { return _loopThreadName; }
 
 EventPoller::EventPoller(std::string name, ThreadPool::Priority priority) {
     _loopThreadName = name;
@@ -202,7 +190,7 @@ void EventPoller::runLoop(bool blocked, bool refSelf) {
             }
 
             for (int i = 0; i < ret; ++i) {
-                auto &ev = events[i];
+                auto& ev = events[i];
                 auto fd = ev.data.fd;
                 auto it = _eventMap.find(fd);
                 if (_eventMap.end() == it) {
@@ -212,7 +200,7 @@ void EventPoller::runLoop(bool blocked, bool refSelf) {
                 auto cb = it->second;
                 try {
                     (*cb)(toPoller(ev.events));
-                } catch (std::exception &e) {
+                } catch (std::exception& e) {
                     ErrorL << "Exception occurred when do event task: " << e.what();
                 }
             }
@@ -236,12 +224,12 @@ void EventPoller::onPipeEvent() {
         listTaskSwap.swap(_listTask);
     }
 
-    for (auto &task : listTaskSwap) {
+    for (auto& task : listTaskSwap) {
         try {
             (*task)();
-        } catch (ExitException &) {
+        } catch (ExitException&) {
             _exitFlag = true;
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             ErrorL << "Exception occurred when do async task: " << e.what();
         }
     }
@@ -253,7 +241,8 @@ void EventPoller::shutdown() {
     if (_loopThread) {
         try {
             _loopThread->join();
-        } catch (...) {}
+        } catch (...) {
+        }
         delete _loopThread;
         _loopThread = nullptr;
     }
@@ -271,7 +260,7 @@ uint64_t EventPoller::flushDelayTask(uint64_t now) {
             if (nxtDelayMs) {
                 _delayTaskMap.emplace(now + nxtDelayMs, std::move(it->second));
             }
-        } catch (std::exception &e) {
+        } catch (std::exception& e) {
             ErrorL << "Exception occurred when do delay task: " << e.what();
         }
     }
@@ -296,17 +285,15 @@ uint64_t EventPoller::getMinDelay() {
     return flushDelayTask(now);
 }
 
-EventPollerPool &EventPollerPool::Instance() {
+EventPollerPool& EventPollerPool::Instance() {
     // static auto sharedRet = std::make_shared<EventPollerPool>();
     // 必须这么定义，上面的报错
     static std::shared_ptr<EventPollerPool> sharedRet(new EventPollerPool());
-    static auto &ret = *sharedRet;
+    static auto& ret = *sharedRet;
     return ret;
 }
 
-EventPoller::Ptr EventPollerPool::getFirstPoller() {
-    return std::dynamic_pointer_cast<EventPoller>(_threads.front());
-}
+EventPoller::Ptr EventPollerPool::getFirstPoller() { return std::dynamic_pointer_cast<EventPoller>(_threads.front()); }
 
 EventPoller::Ptr EventPollerPool::getPoller(bool preferCurrentThread) {
     auto poller = EventPoller::getCurrentPoller();
@@ -316,17 +303,13 @@ EventPoller::Ptr EventPollerPool::getPoller(bool preferCurrentThread) {
     return std::dynamic_pointer_cast<EventPoller>(getExecutor());
 }
 
-void EventPollerPool::setPoolSize(size_t size) {
-    poolSize = size;
-}
+void EventPollerPool::setPoolSize(size_t size) { poolSize = size; }
 
-void EventPollerPool::setEnableCpuAffinity(bool enable) {
-    enableCpuAffinity = enable;
-}
+void EventPollerPool::setEnableCpuAffinity(bool enable) { enableCpuAffinity = enable; }
 
 EventPollerPool::EventPollerPool() {
     auto size = addPoller("event poller", poolSize, ThreadPool::PRIORITY_HIGHEST, true, enableCpuAffinity);
     InfoL << "EventPoller created size: " << size;
 }
 
-}  // namespace myNet
+} // namespace myNet

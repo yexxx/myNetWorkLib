@@ -1,27 +1,27 @@
 // #include <condition_variable>  // std::condition_variable
-#include <iostream>  // std::cout
-#include <mutex>     // std::mutex, std::unique_lock
-#include <thread>    // std::thread
+#include <iostream> // std::cout
+#include <mutex>    // std::mutex, std::unique_lock
+#include <thread>   // std::thread
 
 #include "../myThread/Semaphore.hpp"
 
 using namespace myNet;
 
-Semaphore cv;        // 全局条件变量.
-bool ready = false;  // 全局标志位.
+Semaphore cv;       // 全局条件变量.
+bool ready = false; // 全局标志位.
 
 void do_print_id(int id) {
-    while (!ready) {  // 如果标志位不为 true, 则等待...
-        cv.wait();    // 当前线程被阻塞, 当全局标志位变为 true 之后,
+    while (!ready) { // 如果标志位不为 true, 则等待...
+        cv.wait();   // 当前线程被阻塞, 当全局标志位变为 true 之后,
     }
     // 线程被唤醒, 继续往下执行打印线程编号id.
     printf("thread %d\n", id);
 }
 
 void go() {
-    ready = true;  // 设置全局标志位为 true.
+    ready = true; // 设置全局标志位为 true.
     // cv.notifyOne();
-    cv.post(10);  // 唤醒所有线程.
+    cv.post(10); // 唤醒所有线程.
 }
 
 int main() {

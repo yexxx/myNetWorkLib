@@ -9,14 +9,13 @@
 namespace myNet {
 
 class TCPServer : public Server {
-public:
+  public:
     using Ptr = std::shared_ptr<TCPServer>;
 
     explicit TCPServer(const EventPoller::Ptr& poller = nullptr);
     ~TCPServer() override;
 
-    template <typename SessionType>
-    void start(uint16_t port, const std::string& host = "::", uint32_t backlog = 32);
+    template <typename SessionType> void start(uint16_t port, const std::string& host = "::", uint32_t backlog = 32);
 
     uint16_t getPort() {
         if (!_socket) return 0;
@@ -27,12 +26,12 @@ public:
 
     void setOnCreateSocket(Socket::onCreateSocketCB cb);
 
-protected:
+  protected:
     virtual void cloneFrom(const TCPServer& that);
 
     virtual Session::Ptr onAcceptConnection(const Socket::Ptr& sock);
 
-private:
+  private:
     void onManagerSession();
 
     TCPServer::Ptr getServer(const EventPoller*) const;
@@ -47,8 +46,7 @@ private:
     std::unordered_map<const EventPoller*, Ptr> _clonedServer;
 };
 
-template <typename SessionType>
-inline void TCPServer::start(uint16_t port, const std::string& host, uint32_t backlog) {
+template <typename SessionType> inline void TCPServer::start(uint16_t port, const std::string& host, uint32_t backlog) {
     _sessionBuilder = [](const TCPServer::Ptr& server, const Socket::Ptr& sock) {
         auto session = std::make_shared<SessionType>(sock);
         session->setOnCreateSocket(server->_onCreateSocket);
@@ -83,6 +81,6 @@ inline void TCPServer::start(uint16_t port, const std::string& host, uint32_t ba
     InfoL << "TCP server listening on [" << host << "]: " << port;
 }
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // TCPServer_h
+#endif // TCPServer_h

@@ -30,7 +30,7 @@ int main() {
             }
             DebugL << "cpu负载:" << printer;
 
-            EventPollerPool::Instance().getExecutorDelay([](const vector<int> &vec) {
+            EventPollerPool::Instance().getExecutorDelay([](const vector<int>& vec) {
                 toolkit::_StrPrinter printer;
                 for (auto delay : vec) {
                     printer << delay << "-";

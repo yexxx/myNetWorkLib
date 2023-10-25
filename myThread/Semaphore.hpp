@@ -13,7 +13,7 @@
 namespace myNet {
 
 class Semaphore {
-public:
+  public:
     explicit Semaphore() { sem_init(&_sem, 0, 0); };
 
     ~Semaphore() { sem_destroy(&_sem); };
@@ -40,7 +40,7 @@ public:
         // --_count;
     }
 
-private:
+  private:
     sem_t _sem;
 
     // using LOCK_GUARD = std::unique_lock<std::recursive_mutex>;
@@ -49,6 +49,6 @@ private:
     // std::condition_variable_any _condition;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
 #endif

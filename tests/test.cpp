@@ -12,32 +12,32 @@ using namespace myNet;
 
 // 禁止拷贝基类
 class noncopyable {
-protected:
+  protected:
     noncopyable() {}
     ~noncopyable() {}
 
-private:
-    noncopyable(const noncopyable &that) = delete;
-    noncopyable(noncopyable &&that) = delete;
-    noncopyable &operator=(const noncopyable &that) = delete;
-    noncopyable &operator=(noncopyable &&that) = delete;
+  private:
+    noncopyable(const noncopyable& that) = delete;
+    noncopyable(noncopyable&& that) = delete;
+    noncopyable& operator=(const noncopyable& that) = delete;
+    noncopyable& operator=(noncopyable&& that) = delete;
 };
 
 class testClass : public enable_shared_from_this<testClass> {
-public:
+  public:
     testClass(){};
 
     int get() { return _num; }
     void set(int num) { _num = num; }
 
-private:
+  private:
     int _num{10};
 };
 
 Semaphore sem;
 int main() {
     {
-        shared_ptr<void> sp(nullptr, [&](void *) {
+        shared_ptr<void> sp(nullptr, [&](void*) {
             cout << "~~~~~~~~~~~~~~~~~\n";
             sem.post();
             return nullptr;

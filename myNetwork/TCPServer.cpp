@@ -31,9 +31,7 @@ void TCPServer::setOnCreateSocket(Socket::onCreateSocketCB cb) {
     if (cb) {
         _onCreateSocket = std::move(cb);
     } else {
-        _onCreateSocket = [](const EventPoller::Ptr& poller) {
-            return Socket::createSocket(poller, false);
-        };
+        _onCreateSocket = [](const EventPoller::Ptr& poller) { return Socket::createSocket(poller, false); };
     }
     for (auto& server : _clonedServer) {
         server.second->setOnCreateSocket(cb);
@@ -151,4 +149,4 @@ TCPServer::Ptr TCPServer::getServer(const EventPoller* poller) const {
     return std::static_pointer_cast<TCPServer>(const_cast<TCPServer*>(parent)->shared_from_this());
 }
 
-}  // namespace myNet
+} // namespace myNet

@@ -13,7 +13,7 @@ namespace myNet {
 // 时间管理暂时未实现，先使用ZLToolkit 实现的相关内容
 // ticker
 class ThreadLoadCounter {
-public:
+  public:
     // windowSize: 统计的时间窗口大小
     ThreadLoadCounter(uint64_t maxSize, uint64_t windowSize);
     ~ThreadLoadCounter() = default;
@@ -27,7 +27,7 @@ public:
     // 获取当前线程负载(0-100)
     int getLoad();
 
-private:
+  private:
     using LOCK_GUDAR = std::lock_guard<std::mutex>;
     std::mutex _mtx;
 
@@ -41,18 +41,15 @@ private:
     std::list<std::pair<uint64_t, bool>> _timeRecordList;
 };
 
-template <typename R, typename... ArgTypes>
-class TaskCancelable;
+template <typename R, typename... ArgTypes> class TaskCancelable;
 
 // 接收任意类型的function
-template <typename R, typename... ArgTypes>
-class TaskCancelable<R(ArgTypes...)> {
-public:
+template <typename R, typename... ArgTypes> class TaskCancelable<R(ArgTypes...)> {
+  public:
     using Ptr = std::shared_ptr<TaskCancelable>;
     using taskFunc = std::function<R(ArgTypes...)>;
 
-    template <typename func>
-    TaskCancelable(func&& task) {
+    template <typename func> TaskCancelable(func&& task) {
         _sharedTask = std::make_shared<func>(std::forward<func>(task));
         _weakTask = _sharedTask;
     }
@@ -72,20 +69,13 @@ public:
         return defaultValue<R>();
     }
 
-    template <typename T>
-    static typename std::enable_if<std::is_void<T>::value, void>::type defaultValue() {}
+    template <typename T> static typename std::enable_if<std::is_void<T>::value, void>::type defaultValue() {}
 
-    template <typename T>
-    static typename std::enable_if<std::is_pointer<T>::value, T>::type defaultValue() {
-        return nullptr;
-    }
+    template <typename T> static typename std::enable_if<std::is_pointer<T>::value, T>::type defaultValue() { return nullptr; }
 
-    template <typename T>
-    static typename std::enable_if<std::is_integral<T>::value, T>::type defaultValue() {
-        return 0;
-    }
+    template <typename T> static typename std::enable_if<std::is_integral<T>::value, T>::type defaultValue() { return 0; }
 
-private:
+  private:
     // 禁止复制
     TaskCancelable(const TaskCancelable&) = delete;
     TaskCancelable(const TaskCancelable&&) = delete;
@@ -102,7 +92,7 @@ using TaskIn = std::function<void()>;
 using Task = TaskCancelable<void()>;
 
 class TaskExecutorInterface {
-public:
+  public:
     TaskExecutorInterface() = default;
     ~TaskExecutorInterface() = default;
 
@@ -120,7 +110,7 @@ public:
 };
 
 class TaskExecutor : public ThreadLoadCounter, public TaskExecutorInterface {
-public:
+  public:
     using Ptr = std::shared_ptr<TaskExecutor>;
 
     TaskExecutor(uint64_t maxSize = 32, uint64_t windowSize = 2 * 1000 * 1000) : ThreadLoadCounter(maxSize, windowSize) {}
@@ -129,7 +119,7 @@ public:
 };
 
 class TaskExecutorGetter {
-public:
+  public:
     using Ptr = std::shared_ptr<TaskExecutorGetter>;
 
     TaskExecutorGetter() = default;
@@ -159,7 +149,7 @@ public:
         }
     };
 
-protected:
+  protected:
     // registerThread: 是否记录该线程到thread_local 实例
     // enableCpuAffinity: CPU 亲和性，将线程绑定到CPU
     size_t addPoller(const std::string& name, size_t size, int priority, bool registerThread, bool enableCpuAffinity = true);
@@ -167,6 +157,6 @@ protected:
     std::vector<TaskExecutor::Ptr> _threads;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // TaskExecutor_hpp
+#endif // TaskExecutor_hpp

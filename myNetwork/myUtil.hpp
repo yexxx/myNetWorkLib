@@ -7,20 +7,20 @@ namespace myNet {
 
 // 禁止拷贝基类
 class noncopyable {
-protected:
+  protected:
     noncopyable() {}
     ~noncopyable() {}
 
-private:
-    noncopyable(const noncopyable &that) = delete;
-    noncopyable(noncopyable &&that) = delete;
-    noncopyable &operator=(const noncopyable &that) = delete;
-    noncopyable &operator=(noncopyable &&that) = delete;
+  private:
+    noncopyable(const noncopyable& that) = delete;
+    noncopyable(noncopyable&& that) = delete;
+    noncopyable& operator=(const noncopyable& that) = delete;
+    noncopyable& operator=(noncopyable&& that) = delete;
 };
 
 // 锁
 class MutexWrapper {
-public:
+  public:
     MutexWrapper(bool enable) { _enable = enable; }
     ~MutexWrapper() = default;
 
@@ -31,11 +31,11 @@ public:
         if (_enable) _Mtx.unlock();
     }
 
-private:
+  private:
     bool _enable;
     std::recursive_mutex _Mtx;
 };
 
-}  // namespace myNet
+} // namespace myNet
 
 #endif

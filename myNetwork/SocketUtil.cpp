@@ -98,9 +98,7 @@ int SocketUtil::bindUdpSocket(const uint16_t port, const char* localIp, bool ena
 }
 
 // 原代码将addr.ss_family 设置为AF_UNSPEC, 使用::connect()实现，不知道原理，暂时不实现
-int SocketUtil::dissolveUdpSocket(int sockfd) {
-    return -1;
-}
+int SocketUtil::dissolveUdpSocket(int sockfd) { return -1; }
 
 bool SocketUtil::getDomainIP(const char* host, uint16_t port, sockaddr_storage& addr, int family, int socketType, int protocol, int expireSec) {
     int flag = DNSCache::Instance().getDomainIP(host, addr, family, socketType, protocol, expireSec);
@@ -158,9 +156,9 @@ std::string SocketUtil::getLocalIp() {
     auto checkIP = [](const std::string& ip) {
         if (ip != "127.0.0.1" && ip != "0.0.0.0") {
             uint32_t addressInNetworkOrder = htonl(inet_addr(ip.data()));
-            if (/*(addressInNetworkOrder >= 0x0A000000 && addressInNetworkOrder < 0x0E000000) ||*/  // A类地址
-                (addressInNetworkOrder >= 0xAC100000 && addressInNetworkOrder < 0xAC200000) ||      // B类地址
-                (addressInNetworkOrder >= 0xC0A80000 && addressInNetworkOrder < 0xC0A90000)) {      // C类地址
+            if (/*(addressInNetworkOrder >= 0x0A000000 && addressInNetworkOrder < 0x0E000000) ||*/ // A类地址
+                (addressInNetworkOrder >= 0xAC100000 && addressInNetworkOrder < 0xAC200000) ||     // B类地址
+                (addressInNetworkOrder >= 0xC0A80000 && addressInNetworkOrder < 0xC0A90000)) {     // C类地址
                 return true;
             }
         }
@@ -263,9 +261,13 @@ std::string SocketUtil::inetNtoa(const sockaddr* addr) {
 uint16_t SocketUtil::inetPort(const sockaddr* addr) {
     switch (addr->sa_family) {
     // ntohs：网络字节序转换成主机字节序（涉及大小端转换）
-    case AF_INET: return ntohs(((sockaddr_in*)addr)->sin_port);
-    case AF_INET6: return ntohs(((sockaddr_in6*)addr)->sin6_port);
-    default: assert(0); return 0;
+    case AF_INET:
+        return ntohs(((sockaddr_in*)addr)->sin_port);
+    case AF_INET6:
+        return ntohs(((sockaddr_in6*)addr)->sin6_port);
+    default:
+        assert(0);
+        return 0;
     }
 }
 
@@ -504,9 +506,13 @@ int SocketUtil::setCloseWait(int sockfd, int second) {
 
 int SocketUtil::bindSock(int sockfd, const char* NICIp, uint16_t port, int family) {
     switch (family) {
-    case AF_INET: return bindSock4(sockfd, NICIp, port);
-    case AF_INET6: return bindSock6(sockfd, NICIp, port);
-    default: assert(0); return -1;
+    case AF_INET:
+        return bindSock4(sockfd, NICIp, port);
+    case AF_INET6:
+        return bindSock6(sockfd, NICIp, port);
+    default:
+        assert(0);
+        return -1;
     }
 }
 
@@ -600,7 +606,8 @@ std::shared_ptr<addrinfo> DNSCache::getCacheDomainIP(const char* host, int expir
 
 std::shared_ptr<addrinfo> DNSCache::getSystemDomainIP(const char* host) {
     addrinfo* ret = nullptr;
-    while (-1 == getaddrinfo(host, nullptr, nullptr, &ret) && UV_EINTR == uv_translate_posix_error(errno)) {};
+    while (-1 == getaddrinfo(host, nullptr, nullptr, &ret) && UV_EINTR == uv_translate_posix_error(errno)) {
+    };
     if (!ret) {
         WarnL << "getaddrinfo failed: " << host;
         return nullptr;
@@ -627,4 +634,4 @@ addrinfo* DNSCache::getPerferredAddress(addrinfo* ret, int family, int socketTyp
     return ret;
 }
 
-}  // namespace myNet
+} // namespace myNet

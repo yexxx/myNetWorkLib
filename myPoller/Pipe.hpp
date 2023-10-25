@@ -9,7 +9,7 @@
 namespace myNet {
 
 class Pipe {
-public:
+  public:
     Pipe() {
         if (-1 == pipe(_pipeFd)) {
             throw std::runtime_error("Create posix pipe failed: " + std::string(uv_strerror(uv_translate_posix_error(errno))));
@@ -50,11 +50,11 @@ public:
 
     int readFd() const { return _pipeFd[0]; };
 
-private:
+  private:
     // 0: recv, 1: send
     int _pipeFd[2]{-1, -1};
 };
 
-}  // namespace myNet
+} // namespace myNet
 
-#endif  // Pipe_hpp
+#endif // Pipe_hpp
